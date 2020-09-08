@@ -12,14 +12,14 @@ Starting with Version 1.2.0, ConfigMgr LogFile Opener requires PowerShell 3.0 or
 ## Parameters
 Parameter | Description
 ------------ | -------------
--Hostname |  Can be used for a direct connection to a client device. Otherwise the Tool will prompt you to specify the Hostname.
--CMTrace |  Can be used to specify a different location for CMLogViewer.exe. The Tool will look by default at “C:\Program Files (x86)\Configuration Manager Support Center\CMLogViewer.exe”
--CMLogViewer |  Can be used to specify a different location for CMTrace.exe. The Tool will look by default at "C:\Windows\CMTrace.exe".
--ClientLogFilesDir |  Can be used to specify a different location for the ConfigMgr Client LogFiles. e.g. 'c$\Program Files\CCM\Logs'.
--DisableLogFileMerging |  Can be used to prevent CMTrace from merging multiple LogFiles. The 'Window' Menu has to be used to toggle between the different LogFiles.
--WindowStyle |  Can be used to change the Window Mode of CMTrace and File Explorer. Possible values are 'Minimized', 'Maximized' and 'Normal'.
--CMTraceActionDelay |  Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in CMTrace. Default value is 1500
--ActiveLogProgram |  Specify which Log Program (CMTrace or CMLogViewer) should be active when the tool is starting. Default value is ‘CMTrace’
--DisableHistoryLogFiles |  If specified, the Tool won’t open any history log files
--DisableUpdater |  If specified, the Tool won't prompt if there is a newer Version available
--EnableAutoLogLaunch |  If specified, the Tool will automatically open the corresponding logs when executing client actions.
+`-Hostname` |  Can be used for a direct connection to a client device. Otherwise the Tool will prompt you to specify the Hostname.
+`-CMTrace` |  Can be used to specify a different location for CMLogViewer.exe. The Tool will look by default at “C:\Program Files (x86)\Configuration Manager Support Center\CMLogViewer.exe”
+`-CMLogViewer` |  Can be used to specify a different location for CMTrace.exe. The Tool will look by default at "C:\Windows\CMTrace.exe".
+`-ClientLogFilesDir` |  Can be used to specify a different location for the ConfigMgr Client LogFiles. e.g. 'c$\Program Files\CCM\Logs'.
+`-DisableLogFileMerging` |  Can be used to prevent CMTrace from merging multiple LogFiles. The 'Window' Menu has to be used to toggle between the different LogFiles.
+`-WindowStyle` |  Can be used to change the Window Mode of CMTrace and File Explorer. Possible values are 'Minimized', 'Maximized' and 'Normal'.
+`-CMTraceActionDelay` |  Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in CMTrace. Default value is 1500
+`-ActiveLogProgram` |  Specify which Log Program (CMTrace or CMLogViewer) should be active when the tool is starting. Default value is ‘CMTrace’
+`-DisableHistoryLogFiles` |  If specified, the Tool won’t open any history log files
+`-DisableUpdater` |  If specified, the Tool won't prompt if there is a newer Version available
+`-EnableAutoLogLaunch` |  If specified, the Tool will automatically open the corresponding logs when executing client actions.
