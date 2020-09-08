@@ -10,7 +10,7 @@ The Full Description and Usage Documentation can be found on my blog: http://msi
 Starting with Version 1.2.0, ConfigMgr LogFile Opener requires PowerShell 3.0 or higher.
 
 ## Parameters
-Parameter | Description
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parameter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description
 ------------ | -------------
 `-Hostname` |  Can be used for a direct connection to a client device. Otherwise the Tool will prompt you to specify the Hostname.
 `-CMTrace` |  Can be used to specify a different location for CMLogViewer.exe. The Tool will look by default at “C:\Program Files (x86)\Configuration Manager Support Center\CMLogViewer.exe”
