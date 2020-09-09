@@ -13,18 +13,16 @@
     Specify a Default hostname for direct connection. Otherwise the Tool will prompt you to specify a hostname.
 .PARAMETER ClientLogFilesDir
     Specify the directory in which the ConfigMgr Client LogFiles are located. (e.g: 'Program Files\CCM\Logs')
-.PARAMETER DisableCMTraceLogFileMerging
-    If specified, the LogFiles won't get merged by CMTrace
-.PARAMETER WindowStyle
-    Specify the Window Style of CMTrace and File Explorer. Default value is 'normal'
 .PARAMETER ActionDelayShort
     Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 1500
 .PARAMETER ActionDelayLong
     Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500
-.PARAMETER ActiveLogProgram
-    Specify which Log Program should be active when the tool is starting. Default value is 'CMTrace'
+.PARAMETER LogProgram
+    Specify which Log Program should be used when the tool is starting. Default value is 'CMTrace'
+.PARAMETER LogProgramWindowStyle
+    Specify the Window Style of CMTrace and File Explorer. Default value is 'normal'
 .PARAMETER DisableHistoryLogFiles
-    If specified, the Tool won't open any history log files
+    If specified, the Tool won't open any history log files. Opening history log files is currently only supported with CMLogViewer.
 .PARAMETER RecentLogLimit
     Specify the number of recent log files which will be listed in the menu. Default value is 15
 .PARAMETER DisableUpdater
@@ -32,12 +30,12 @@
 .PARAMETER EnableAutoLogLaunch
     If specified, the Tool will automatically open the corresponding logs when executing client actions.
 .EXAMPLE
-    .\ConfigMgr_LogFile_Opener.ps1 -CMTrace 'C:\temp\CMTrace.exe' -Hostname 'PC01' -ClientLogFilesDir 'Program Files\CCM\Logs' -DisableLogFileMerging -WindowStyle Maximized
-    .\ConfigMgr_LogFile_Opener.ps1 -CMLogViewer 'C:\temp\CMLogViewer.exe' -Hostname 'PC02' -DisableHistoryLogFiles -ActiveLogProgram CMLogViewer -RecentLogLimit 25
+    .\ConfigMgr_LogFile_Opener.ps1 -CMTrace 'C:\temp\CMTrace.exe' -Hostname 'PC01' -ClientLogFilesDir 'Program Files\CCM\Logs' -LogProgramWindowStyle Maximized
+    .\ConfigMgr_LogFile_Opener.ps1 -CMLogViewer 'C:\temp\CMLogViewer.exe' -Hostname 'PC02' -DisableHistoryLogFiles -LogProgram CMLogViewer -RecentLogLimit 25
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-09-07
+    Date modified: 2020-09-09
     Version:       3.0.0
 #>
 
@@ -58,13 +56,6 @@ Param(
     [Parameter(Mandatory=$false, HelpMessage='Specify the directory in which the ConfigMgr Client Logfiles are located. (e.g: "Program Files\CCM\Logs")')]
     [String] $ClientLogFilesDir = 'C$\Windows\CCM\Logs',
 
-    [Parameter(Mandatory=$false, HelpMessage="If specified, the LogFiles won't get merged by CMTrace")]
-    [Switch] $DisableCMTraceLogFileMerging,
-
-    [Parameter(Mandatory=$false, HelpMessage="Specify the Window Style of CMTrace and File Explorer. Default value is 'normal'")]
-    [ValidateSet('Minimized', 'Maximized', 'Normal')]
-    [String] $WindowStyle = 'Normal',
-
     [Parameter(Mandatory=$false, HelpMessage="Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 1500")]
     [Int] $ActionDelayShort = 1500,
 
@@ -73,9 +64,13 @@ Param(
 
     [Parameter(Mandatory=$false, HelpMessage="Specify which Log Program should be active when the tool is starting. Default value is 'CMTrace'")]
     [ValidateSet('CMTrace', 'CMLogViewer', 'OneTrace')]
-    [String] $ActiveLogProgram = 'CMTrace',
+    [String] $LogProgram = 'CMTrace',
+	
+    [Parameter(Mandatory=$false, HelpMessage="Specify the WindowStyle of CMTrace and File Explorer. Default value is 'normal'")]
+    [ValidateSet('Minimized', 'Maximized', 'Normal')]
+    [String] $LogProgramWindowStyle = 'Normal',
 
-    [Parameter(Mandatory=$false, HelpMessage="If specified, the Tool won't open any history log files. Opening history log files is currently only possible with CMLogViewer.")]
+    [Parameter(Mandatory=$false, HelpMessage="If specified, the Tool won't open any history log files. Opening history log files is currently only supported with CMLogViewer.")]
     [Switch] $DisableHistoryLogFiles,
 
     [Parameter(Mandatory=$false, HelpMessage="Specify the number of recent log files which will be listed in the menu. Default value is 15")]
@@ -164,6 +159,10 @@ $logfileTable = @{
     'ccmstatemessage' = @{
         'path' = $clientLogfilesDir
         'logfiles' = @('StateMessage.log')
+    }
+    'ccmscript' = @{
+        'path' = $clientLogfilesDir
+        'logfiles' = @('Scripts.log')
     }
     'winservicingsetupact' = @{
         'path' = 'C$\Windows\Panther'
@@ -272,12 +271,9 @@ Function Invoke-CMTrace ([String] $Path, [Array] $Files) {
         # Write logfiles name in CMTrace format, "Log1" "Log2" "Log3" etc.
         $shellObj.SendKeys('"' + [String]::Join('" "', $files) + '"')
 
-        # check if logfile merging is not disabled
-        If (!$disableCMTraceLogfileMerging) {
-            # Navigate to Merge checkbox and enable it
-            $shellObj.SendKeys('{TAB}{TAB}{TAB}{TAB}{TAB}')
-            $shellObj.SendKeys(' ')
-        }
+        # Navigate to Merge checkbox and enable it
+        $shellObj.SendKeys('{TAB}{TAB}{TAB}{TAB}{TAB}')
+        $shellObj.SendKeys(' ')
 
         # Send ENTER
         $shellObj.SendKeys('{ENTER}')
@@ -321,7 +317,7 @@ Function Invoke-CMTrace ([String] $Path, [Array] $Files) {
     }
 
     # Check WindowStyle. NOTE: CMTrace can't be launched using the native 'WindowStyle' Attribute via Start-Process above.
-    Switch ($windowStyle) {
+    Switch ($logProgramWindowStyle) {
         'Minimized' {$shellObj.SendKeys('% n')}
         'Maximized' {$shellObj.SendKeys('% x')}
     }
@@ -330,9 +326,10 @@ Function Invoke-CMTrace ([String] $Path, [Array] $Files) {
 Function Invoke-CMLogViewer ([String] $Path, [Array] $Files) {
     # Check if CMLogViewer exists
     If (!(Test-Path -Path $cmLogViewer)) {
-        Invoke-MessageBox -Message "'$cmLogViewer' is not accessible!"
+        Invoke-MessageBox -Message "'$cmLogViewer' is not accessible! Please install the 'Configuration Manager Support Center' from the tools folder."
         Return
     }
+
     # Check if log files were specified
     If ($Files -gt 1) {
         # Check if History Logfiles are disabled
@@ -356,21 +353,22 @@ Function Invoke-CMLogViewer ([String] $Path, [Array] $Files) {
         }
 
         # Open Logfile in CMLogViewer
-        Start-Process -FilePath $cmLogViewer -ArgumentList $fullLogfilePath -WindowStyle $windowStyle
+        Start-Process -FilePath $cmLogViewer -ArgumentList $fullLogfilePath -WindowStyle $logProgramWindowStyle
     }
     # Check if no files were specified
     Else {
         # Open CMLogViewer
-        Start-Process -FilePath $cmLogViewer -WindowStyle $windowStyle
+        Start-Process -FilePath $cmLogViewer -WindowStyle $logProgramWindowStyle
     }
 }
 
 Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
     # Check if OneTrace exists
     If (!(Test-Path -Path $oneTrace)) {
-        Invoke-MessageBox -Message "'$oneTrace' is not accessible!"
+        Invoke-MessageBox -Message "'$oneTrace' is not accessible! Please install the 'Configuration Manager Support Center' from the tools folder."
         Return
     }
+
     # Check if log files were specified
     If ($Files -gt 1) {
         # Start OneTrace and wait until it's open
@@ -395,6 +393,7 @@ Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
 
         # Write logfiles name in OneTrace format, "Log1" "Log2" "Log3" etc.
         $shellObj.SendKeys('"' + [String]::Join('" "', $files) + '"')
+        Start-Sleep -Milliseconds $actionDelayShort
 
         # Send ENTER
         $shellObj.SendKeys('{ENTER}')
@@ -406,20 +405,20 @@ Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
     }
 
     # Check WindowStyle. NOTE: OneTrace can't be launched using the native 'WindowStyle' Attribute via Start-Process above.
-    Switch ($windowStyle) {
+    Switch ($logProgramWindowStyle) {
         'Minimized' {$shellObj.SendKeys('% n')}
         'Maximized' {$shellObj.SendKeys('% x')}
     }
 }
 
 Function Invoke-LogProgram([String] $Path, [Array] $Files) {
-    If ($activeLogProgram -eq 'CMTrace') {
+    If ($logProgram -eq 'CMTrace') {
         Invoke-CMTrace -Path $path -Files $files
     }
-    ElseIf ($activeLogProgram -eq 'CMLogViewer') {
+    ElseIf ($logProgram -eq 'CMLogViewer') {
         Invoke-CMLogViewer -Path $path -Files $files
     }
-    ElseIf ($activeLogProgram -eq 'OneTrace') {
+    ElseIf ($logProgram -eq 'OneTrace') {
         Invoke-OneTrace -Path $path -Files $files
     }
 }
@@ -433,7 +432,7 @@ Function Open-Path ([String] $Path) {
         Invoke-MessageBox -Message "'$logfilePath' is not accessible!"
     } Else {
         # Open File explorer
-        Start-Process -FilePath 'C:\Windows\explorer.exe' -ArgumentList $logfilePath -WindowStyle $windowStyle
+        Start-Process -FilePath 'C:\Windows\explorer.exe' -ArgumentList $logfilePath -WindowStyle $logProgramWindowStyle
     }
 }
 
@@ -585,14 +584,14 @@ Function Get-RecentLog {
 
     # Check if CCM Logfile path is accessible
     If (!(Test-Path -Path $logfilePath)) {
-        Invoke-MessageBox -Message "Unable to access '$logfilePath'."
-        Return
+        Invoke-MessageBox -Message "Unable to access '$logfilePath'." | Out-Null
+        Return $false
     }
 
     # Check if CCM Logfile path contains any logs
     If (!(Get-ChildItem $logfilePath).Count) {
-        Invoke-MessageBox -Message "Log directory '$logfilePath' doesn't contain any Log files." -Icon 'Exclamation'
-        Return
+        Invoke-MessageBox -Message "Log directory '$logfilePath' doesn't contain any Log files." -Icon 'Exclamation' | Out-Null
+        Return $false
     }
 
     # Get Recent Log Files
@@ -1077,7 +1076,21 @@ Function Get-PendingRebootData {
 }
 
 Function Test-PendingRebootModuleInstalled {
-    Return Get-Module -ListAvailable -Name PendingReboot
+    If (Get-Module -ListAvailable -Name PendingReboot) {
+        Return $true
+    }
+    Else {
+        Return $false
+    }
+}
+
+Function Get-PendingrebootModuleVersion {
+    If (Test-PendingRebootModuleInstalled) {
+        Return (Get-Module -ListAvailable -Name PendingReboot).Version.ToString()
+    }
+    Else {
+        Return $false
+    }
 }
 
 Function Install-PendingRebootModule {
@@ -1121,9 +1134,9 @@ Function Uninstall-PendingRebootModule {
 
         # Try to uninstall the PendingReboot Module
         Uninstall-Module -Name PendingReboot -Force
-
+        
         # Check if the module is available
-        If (!Test-PendingRebootModuleInstalled) {
+        If (!(Test-PendingRebootModuleInstalled)) {
             Invoke-MessageBox -Icon Information -Message "The PendingReboot PowerShell Module has been successfully uninstalled."
         }
         Else {
@@ -1378,10 +1391,11 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch, [switc
     Write-Output ' [12] InventoryAgent.log, InventoryProvider.log'
     Write-Output ' [13] smsts.log'
     Write-Output ' [14] StateMessage.log'
-    Write-Output ' [15] WindowsUpdate.log'
-    Write-Output ' [16] setupact.log'
-    Write-Output ' [17] setuperr.log'
-    Write-Output ' [18] MpCmdRun.log'
+    Write-Output ' [15] Scripts.log'
+    Write-Output ' [16] WindowsUpdate.log'
+    Write-Output ' [17] setupact.log'
+    Write-Output ' [18] setuperr.log'
+    Write-Output ' [19] MpCmdRun.log'
     Write-Output ''
     Write-Output ' --- File Explorer -----------------------------------------'
     Write-Output ' [50] C:\Windows\CCM\Logs'
@@ -1392,7 +1406,7 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch, [switc
     Write-Output ''
     Write-Output ' --- Options -----------------------------------------------'
     Write-Output ' [93] Show recent logs     [94] Refresh Device data'
-    Write-Output " [96] Client Actions       [97] Start $activeLogProgram"
+    Write-Output " [96] Client Actions       [97] Start $logProgram"
     Write-Output " [98] Change Device        [99] Exit"
     Write-Output ' [X]  Settings             [?]  About'
     Write-Output ''
@@ -1412,10 +1426,11 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch, [switc
         12 {Open-LogFile -Action 'ccminventory'}
         13 {Open-LogFile -Action 'ccmsmsts'}
         14 {Open-LogFile -Action 'ccmstatemessage'}
-        15 {Open-LogFile -Action 'winupdate'}
-        16 {Open-LogFile -Action 'winservicingsetupact'}
-        17 {Open-LogFile -Action 'winservicingsetuperr'}
-        18 {Open-LogFile -Action 'scepmpcmdrun'}
+        15 {Open-LogFile -Action 'ccmscript'}
+        16 {Open-LogFile -Action 'winupdate'}
+        17 {Open-LogFile -Action 'winservicingsetupact'}
+        18 {Open-LogFile -Action 'winservicingsetuperr'}
+        19 {Open-LogFile -Action 'scepmpcmdrun'}
         50 {Open-Path -Path 'C$\Windows\CCM\Logs'}
         51 {Open-Path -Path 'C$\Windows\ccmcache'}
         52 {Open-Path -Path 'C$\Windows\ccmsetup'}
@@ -1511,9 +1526,9 @@ Function Invoke-ClientActionMenu {
 
 Function Invoke-RecentLogMenu {
     $recentLogTable = Get-RecentLog
-
+        
     # Invoke Main Menu in case of error (e.g. Log Directoy not accessible)
-    If (!$recentLogTable) {
+    If ($recentLogTable -eq $false) {
         Invoke-MainMenu
     }
 
@@ -1566,44 +1581,75 @@ Function Invoke-SettingsMenu  {
     Write-Output ''
     Write-Output ' --- Log Program -------------------------------------------'
 
-    If ($activeLogProgram -eq "CMTrace") {
+    If ($logProgram -eq "CMTrace") {
         Write-Output " [10] CMTrace (active)"
     }
     Else {
         Write-Output " [10] CMTrace"
     }
 
-    If ($activeLogProgram -eq "CMLogViewer") {
+    If ($logProgram -eq "CMLogViewer") {
         Write-Output " [11] CMLogViewer (active)"
     }
     Else {
         Write-Output " [11] CMLogViewer"
     }
 
-    If ($activeLogProgram -eq "OneTrace") {
+    If ($logProgram -eq "OneTrace") {
         Write-Output " [12] OneTrace (active)"
     }
     Else {
         Write-Output " [12] OneTrace"
     }
     Write-Output ''
+    Write-Output ' --- Log Program / File Explorer WindowStyle ---------------'
+    If ($logProgramWindowStyle -eq "Normal") {
+        Write-Output " [20] Normal (active)"
+    }
+    Else {
+        Write-Output " [20] Normal"
+    }
+
+    If ($logProgramWindowStyle -eq "Minimized") {
+        Write-Output " [21] Minimized (active)"
+    }
+    Else {
+        Write-Output " [21] Minimied"
+    }
+
+    If ($logProgramWindowStyle -eq "Maximized") {
+        Write-Output " [22] Maximized (active)"
+    }
+    Else {
+        Write-Output " [22] Maximized"
+    }
+    Write-Output ''
     If (Test-PendingRebootModuleInstalled) {
-        Write-Output " --- PendingReboot PowerShell Module (installed) -----------"
-        Write-Output " [20] Update Module from PowerShell Gallery"
-        Write-Output " [21] Uninstall Module"
+        $pendingRebootModuleVersion = Get-PendingrebootModuleVersion
+        Write-Output " --- PendingReboot PowerShell Module (v$pendingRebootModuleVersion installed) --"
+        Write-Output " [30] Update Module from PowerShell Gallery"
+        Write-Output " [31] Uninstall Module"
     }
     Else {
         Write-Output " --- PendingReboot PowerShell Module -----------------------"
-        Write-Output " [20] Install Module from PowerShell Gallery"
+        Write-Output " [30] Install Module from PowerShell Gallery"
     }
     Write-Output ''
     Write-Output " --- General options ---------------------------------------"
-    If ($EnableAutoLogLaunch -eq $false) {
-        Write-Output " [30] Enable Auto Log Launch"
+    If ($enableAutoLogLaunch -eq $false) {
+        Write-Output " [40] Enable Auto Log Launch"
     }
     Else {
-        Write-Output " [30] Disable Auto Log Launch"
+        Write-Output " [40] Disable Auto Log Launch"
     }
+
+    If ($logProgram -eq "CMLogViewer" -and $disableHistoryLogFiles -eq $true) {
+        Write-Output " [41] Enable History LogFiles"
+    }
+    ElseIf (($logProgram -eq "CMLogViewer" -and $disableHistoryLogFiles -eq $false)) {
+        Write-Output " [41] Disable History LogFiles"
+    }
+
     Write-Output ''
     Write-Output ' --- Options -----------------------------------------------'
     Write-Output " [98] Back to Main Menu    [99] Exit"
@@ -1612,22 +1658,26 @@ Function Invoke-SettingsMenu  {
     Switch (Read-Host -Prompt ' Please select an Action') {
         1 {Install-ConsoleExtension}
         2 {Remove-ConsoleExtension}
-        10 {$activeLogProgram = 'CMTrace'}
-        11 {$activeLogProgram = 'CMLogViewer'}
-        12 {$activeLogProgram = 'OneTrace'}
-        20 {
-            Install-PendingRebootModule
-            Invoke-SettingsMenu
-        }
-        21 {
-            Uninstall-PendingRebootModule
-            Invoke-SettingsMenu
-        }
-        30 {
+        10 {$logProgram = 'CMTrace'}
+        11 {$logProgram = 'CMLogViewer'}
+        12 {$logProgram = 'OneTrace'}
+        20 {$logProgramWindowStyle = 'Normal'}
+        21 {$logProgramWindowStyle = 'Minimized'}
+        22 {$logProgramWindowStyle = 'Maximized'}
+        30 {Install-PendingRebootModule}
+        31 {Uninstall-PendingRebootModule}
+        40 {
             If ($enableAutoLogLaunch -eq $false) {
                 $enableAutoLogLaunch = $true
             } Else {
                 $enableAutoLogLaunch = $false
+            }
+        }
+        41 {
+            If ($logProgram -eq 'CMLogViewer' -and $disableHistoryLogFiles -eq $true) {
+                $disableHistoryLogFiles = $false
+            } Else {
+                $disableHistoryLogFiles = $true
             }
         }
         98 {Invoke-MainMenu -RefreshDeviceData}
