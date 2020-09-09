@@ -4,7 +4,7 @@
 ## Description
 This Tool automates the usage of CMTrace, CMLogViewer and OneTrace for opening single or multiple ConfigMgr Client LogFiles. Besides handling LogFiles, the Tool can be used to execute the most common ConfigMgr Client actions.
 
-The Full Description and Usage Documentation can be found on my blog: http://msitproblog.com/2016/11/20/configmgr-logfile-opener-released/
+The Full Description and Usage Documentation can be found on my blog: https://msitproblog.com/configmgr-logfile-opener
 
 ## Requirements
 * Starting with Version 1.2.0, ConfigMgr LogFile Opener requires PowerShell 3.0 or higher.
