@@ -35,7 +35,7 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-09-09
+    Date modified: 2020-09-10
     Version:       3.0.0
 #>
 
@@ -60,7 +60,7 @@ Param(
     [Int] $ActionDelayShort = 1500,
 
     [Parameter(Mandatory=$false, HelpMessage="Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500")]
-    [Int] $ActionDelayLong = 3000,
+    [Int] $ActionDelayLong = 3300,
 
     [Parameter(Mandatory=$false, HelpMessage="Specify which Log Program should be active when the tool is starting. Default value is 'CMTrace'")]
     [ValidateSet('CMTrace', 'CMLogViewer', 'OneTrace')]
@@ -279,7 +279,7 @@ Function Invoke-CMTrace ([String] $Path, [Array] $Files) {
         $shellObj.SendKeys('{ENTER}')
 
         # Wait until log file is loaded
-        Start-Sleep -Milliseconds $actionDelayShort
+        Start-Sleep -Milliseconds $actionDelayLong
 
         # Send CTRL + END to scroll to the bottom
         $shellObj.SendKeys('^{END}')
@@ -377,6 +377,7 @@ Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
 
         # Send ALT to select the menu bar
         $shellObj.SendKeys('%')
+        Start-Sleep -Milliseconds 500
 
         # Send F to select the File Dialog
         $shellObj.SendKeys('F')
