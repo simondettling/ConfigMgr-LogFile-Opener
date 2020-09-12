@@ -1709,15 +1709,15 @@ Function Invoke-AboutMenu {
     Invoke-AboutMenu
 }
 
-# Check PowerShell Version
-If ($PSVersionTable.PSVersion.Major -lt 3) {
-    Invoke-MessageBox -Message 'This tool requires PowerShell 3.0 or later!'
+# Check OS Version
+If ([Version] (Get-CimInstance -ClassName Win32_OperatingSystem -Property Version).Version -lt "6.3") {
+    Invoke-MessageBox -Message 'This tool requires Windows 8.1 / Windows Server 2012 R2 or newer!'
     Exit
 }
 
-# Check OS Version
-If ([Version] (Get-CimInstance -ClassName Win32_OperatingSystem -Property Version).Version -lt "6.3") {
-    Invoke-MessageBox -Message 'This tool requires Windows 8.1 or newer!'
+# Check PowerShell Version
+If ($PSVersionTable.PSVersion.Major -lt 3) {
+    Invoke-MessageBox -Message 'This tool requires PowerShell 3.0 or newer!'
     Exit
 }
 
