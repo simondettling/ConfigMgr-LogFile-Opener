@@ -1085,9 +1085,9 @@ Function Test-PendingRebootModuleInstalled {
     }
 }
 
-Function Get-PendingrebootModuleVersion {
+Function Get-PendingRebootModuleVersion {
     If (Test-PendingRebootModuleInstalled) {
-        Return (Get-Module -ListAvailable -Name PendingReboot).Version.ToString()
+        Return (Get-Module -ListAvailable -Name PendingReboot)[0].Version.ToString()
     }
     Else {
         Return $false
@@ -1548,18 +1548,18 @@ Function Invoke-RecentLogMenu {
     Write-Output " [99] Exit"
     Write-Output ''
 
-    $input = Read-Host -Prompt ' Please select an Action'
-    Switch ($input) {
+    $recentLogInput = Read-Host -Prompt ' Please select an Action'
+    Switch ($recentLogInput) {
         97 {Invoke-RecentLogMenu}
         98 {Invoke-MainMenu}
         99 {Clear-Host; Exit}
         Default {
             # Convert input to integer
             Try {
-                $inputInt32 = [convert]::ToInt32($input, 10)
+                $recentLogInputInt32 = [convert]::ToInt32($recentLogInput, 10)
 
                 # Get log handler for user input
-                $logHandler = $recentLogTable.GetEnumerator() | Where-Object {$_.Name -eq $inputInt32}
+                $logHandler = $recentLogTable.GetEnumerator() | Where-Object {$_.Name -eq $recentLogInputInt32}
             }
             Catch {
                 Invoke-RecentLogMenu
@@ -1627,7 +1627,7 @@ Function Invoke-SettingsMenu  {
     }
     Write-Output ''
     If (Test-PendingRebootModuleInstalled) {
-        $pendingRebootModuleVersion = Get-PendingrebootModuleVersion
+        $pendingRebootModuleVersion = Get-PendingRebootModuleVersion
         Write-Output " --- PendingReboot PowerShell Module (v$pendingRebootModuleVersion installed) --"
         Write-Output " [30] Update Module from PowerShell Gallery"
         Write-Output " [31] Uninstall Module"
