@@ -57,10 +57,10 @@ Param(
     [String] $ClientLogFilesDir = 'C$\Windows\CCM\Logs',
 
     [Parameter(Mandatory=$false, HelpMessage="Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 1500")]
-    [Int] $ActionDelayShort = 1500,
+    [Int] $ActionDelayShort = 1700,
 
     [Parameter(Mandatory=$false, HelpMessage="Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500")]
-    [Int] $ActionDelayLong = 3300,
+    [Int] $ActionDelayLong = 3500,
 
     [Parameter(Mandatory=$false, HelpMessage="Specify which Log Program should be active when the tool is starting. Default value is 'CMTrace'")]
     [ValidateSet('CMTrace', 'CMLogViewer', 'OneTrace')]
@@ -1711,13 +1711,13 @@ Function Invoke-AboutMenu {
 
 # Check OS Version
 If ([Version] (Get-CimInstance -ClassName Win32_OperatingSystem -Property Version).Version -lt "6.3") {
-    Invoke-MessageBox -Message 'This tool requires Windows 8.1 / Windows Server 2012 R2 or newer!'
+    Invoke-MessageBox -Message 'ConfigMgr LogFile Opener requires Windows 8.1 / Windows Server 2012 R2 or newer! Exiting...'
     Exit
 }
 
 # Check PowerShell Version
 If ($PSVersionTable.PSVersion.Major -lt 3) {
-    Invoke-MessageBox -Message 'This tool requires PowerShell 3.0 or newer!'
+    Invoke-MessageBox -Message 'ConfigMgr LogFile Opener requires PowerShell 3.0 or newer! Exiting...'
     Exit
 }
 
