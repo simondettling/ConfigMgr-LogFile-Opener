@@ -35,7 +35,7 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-09-10
+    Date modified: 2020-09-12
     Version:       3.0.0
 #>
 
@@ -444,6 +444,7 @@ Function Invoke-ClientAction([String[]] $Action, [String] $LogFile) {
 
         foreach ($singleAction in $action) {
             # Trigger specified WMI Method on Client. Note: Invoke-Cim Command doesn't work here --> Error 0x8004101e
+            # <https://powershell.org/forums/topic/invoke-cimmethod-executes-correct-but-returns-wmi-error-0x8004101e/>
             If ($hostnameIsRemote) {
                 Invoke-WmiMethod -ComputerName $hostname -Namespace 'root\CCM' -Class 'SMS_Client' -Name 'TriggerSchedule' -ArgumentList ('{' + $singleAction + '}') | Out-Null
             }
@@ -829,18 +830,17 @@ Function Invoke-CcmEval {
 
     Try {
         If ($hostnameIsRemote) {
-            # Note: Native ScheduledTask Cmdlets are only working on Win8.1 / Srv 2012 R2 or newer
             # Create PowerShell Session for target computer
-            $psSession = New-PSSession -ComputerName $hostname
+            $cimSession = New-CimSession -ComputerName $hostname
 
             # Run ccmeeval Task on target computer
-            Invoke-Command -Session $psSession -ScriptBlock { schtasks /Run /TN "\Microsoft\Configuration Manager\Configuration Manager Health Evaluation" } | Out-Null
+            Start-ScheduledTask -CimSession $cimSession -TaskPath "\Microsoft\Configuration Manager" -TaskName "Configuration Manager Health Evaluation"
 
             # Terminate PowerShell Session
-            Remove-PSSession -Session $psSession
+            Remove-CimSession -CimSession $cimSession
         }
         Else {
-            schtasks /Run /TN "\Microsoft\Configuration Manager\Configuration Manager Health Evaluation" > $null
+            Start-ScheduledTask -TaskPath "\Microsoft\Configuration Manager" -TaskName "Configuration Manager Health Evaluation"
         }
 
         Invoke-MessageBox -Message "ConfigMgr Client Evaluation has been executed on $($hostname)." -Icon Information
@@ -1295,7 +1295,7 @@ Function Write-MenuDeviceData {
     Write-Output ''
 }
 
-Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch, [switch] $RefreshDeviceData) {
+Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch) {
     # Reset Hostname if needed
     If ($resetHostname) {
         $hostname = ''
@@ -1321,7 +1321,8 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch, [switc
     }
 
     # Perform the following checks / tasks only if the hostname was changed or on first launch
-    If ($resetHostname -or $firstLaunch -or $refreshDeviceData) {
+    If ($resetHostname -or $firstLaunch) {
+
         # Check if the Device name only contains numbers
         If ($hostname -match '^[0-9]*$') {
             Invoke-MessageBox -Message "The specified Device name '$hostname' is not valid."
@@ -1438,7 +1439,7 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch, [switc
         53 {Open-Path -Path 'C$\Windows\Logs\Software'}
         54 {Open-Path -Path 'C$\Windows\Temp'}
         93 {Invoke-RecentLogMenu}
-        94 {Invoke-MainMenu -RefreshDeviceData}
+        94 {Invoke-MainMenu}
         96 {Invoke-ClientActionMenu}
         97 {Invoke-LogProgram}
         98 {Invoke-MainMenu -ResetHostname}
@@ -1705,12 +1706,18 @@ Function Invoke-AboutMenu {
         99 {Clear-Host; Exit}
     }
 
-    Invoke-SettingsMenu
+    Invoke-AboutMenu
 }
 
 # Check PowerShell Version
 If ($PSVersionTable.PSVersion.Major -lt 3) {
     Invoke-MessageBox -Message 'This tool requires PowerShell 3.0 or later!'
+    Exit
+}
+
+# Check OS Version
+If ([Version] (Get-CimInstance -ClassName Win32_OperatingSystem -Property Version).Version -lt "6.3") {
+    Invoke-MessageBox -Message 'This tool requires Windows 8.1 or newer!'
     Exit
 }
 
