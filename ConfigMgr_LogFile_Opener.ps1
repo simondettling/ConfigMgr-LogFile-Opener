@@ -65,7 +65,7 @@ Param(
     [Parameter(Mandatory=$false, HelpMessage="Specify which Log Program should be active when the tool is starting. Default value is 'CMTrace'")]
     [ValidateSet('CMTrace', 'CMLogViewer', 'OneTrace')]
     [String] $LogProgram = 'CMTrace',
-	
+
     [Parameter(Mandatory=$false, HelpMessage="Specify the WindowStyle of CMTrace and File Explorer. Default value is 'normal'")]
     [ValidateSet('Minimized', 'Maximized', 'Normal')]
     [String] $LogProgramWindowStyle = 'Normal',
@@ -1135,7 +1135,7 @@ Function Uninstall-PendingRebootModule {
 
         # Try to uninstall the PendingReboot Module
         Uninstall-Module -Name PendingReboot -Force
-        
+
         # Check if the module is available
         If (!(Test-PendingRebootModuleInstalled)) {
             Invoke-MessageBox -Icon Information -Message "The PendingReboot PowerShell Module has been successfully uninstalled."
@@ -1528,7 +1528,7 @@ Function Invoke-ClientActionMenu {
 
 Function Invoke-RecentLogMenu {
     $recentLogTable = Get-RecentLog
-        
+
     # Invoke Main Menu in case of error (e.g. Log Directoy not accessible)
     If ($recentLogTable -eq $false) {
         Invoke-MainMenu
