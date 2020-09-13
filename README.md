@@ -7,7 +7,8 @@ This Tool automates the usage of CMTrace, CMLogViewer and OneTrace for opening s
 The Full Description and Usage Documentation can be found on my blog: https://msitproblog.com/configmgr-logfile-opener
 
 ## Requirements
-* Starting with Version 1.2.0, ConfigMgr LogFile Opener requires PowerShell 3.0 or higher.
+* Starting with Version 3.0.0, Windows 8.1 / Server 2012 R2 or later is required
+* Starting with Version 1.2.0, PowerShell 3.0 or later is required.
 
 ## Parameters
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parameter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description
