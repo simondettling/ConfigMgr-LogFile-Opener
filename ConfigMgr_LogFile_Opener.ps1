@@ -391,10 +391,10 @@ Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
 
         # Send Enter to switch to the specified path
         $shellObj.SendKeys('{ENTER}')
+        Start-Sleep -Milliseconds $actionDelayShort
 
         # Write logfiles name in OneTrace format, "Log1" "Log2" "Log3" etc.
         $shellObj.SendKeys('"' + [String]::Join('" "', $files) + '"')
-        Start-Sleep -Milliseconds $actionDelayShort
 
         # Send ENTER
         $shellObj.SendKeys('{ENTER}')
