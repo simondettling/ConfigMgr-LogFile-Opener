@@ -35,7 +35,7 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-09-12
+    Date modified: 2020-09-30
     Version:       3.0.0
 #>
 
@@ -1249,8 +1249,29 @@ Function Disable-RemoteRegistry {
     }
 }
 
-Function Start-Regedit {
+Function Connect-Regedit {
+    # Start regedit and wait until it is open
     Start-Process -FilePath "C:\Windows\system32\regedt32.exe"
+    Start-Sleep -Milliseconds $actionDelayShort
+
+    # Send ALT to select the menu bar
+    $shellObj.SendKeys('%')
+
+    # Send Enter to open the File menu
+    $shellObj.SendKeys('{ENTER}')
+
+    # Send C to select the Connect
+    $shellObj.SendKeys('C')
+
+    # Send Enter to open the current selection
+    $shellObj.SendKeys('{ENTER}')
+    Start-Sleep -Milliseconds $actionDelayShort
+
+    # Write computer name into open dialog
+    $shellObj.SendKeys($hostname)
+
+    # Send Enter to switch to the specified path
+    $shellObj.SendKeys('{ENTER}')
 }
 
 Function Write-MenuHeader {
@@ -1487,7 +1508,7 @@ Function Invoke-ClientActionMenu {
     Write-Output ' --- Other ------------------------------------------'
     Write-Output ' [50] Start Remote Registry Service'
     Write-Output ' [51] Stop Remote Registry Service'
-    Write-Output ' [52] Start Regedit'
+    Write-Output ' [52] Connect via Regedit'
     Write-Output ''
     Write-Output ' --- Options -----------------------------------------------'
     Write-Output " [98] Back to Main Menu    [99] Exit"
@@ -1518,7 +1539,7 @@ Function Invoke-ClientActionMenu {
         44 {Invoke-CcmRepair}
         50 {Enable-RemoteRegistry}
         51 {Disable-RemoteRegistry}
-        52 {Start-Regedit}
+        52 {Connect-Regedit}
         98 {Invoke-MainMenu}
         99 {Clear-Host; Exit}
     }
