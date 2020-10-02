@@ -381,6 +381,7 @@ Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
 
         # Send F to select the File Dialog
         $shellObj.SendKeys('F')
+        Start-Sleep -Milliseconds 500
 
         # Send Enter to open the current selection
         $shellObj.SendKeys('{ENTER}')
@@ -616,7 +617,7 @@ Function Get-RecentLog {
 }
 
 Function Test-ConsoleInstallation {
-    If (Test-Path Env:SMS_ADMIN_UI_PATH) {
+    If (Test-Path $env:SMS_ADMIN_UI_PATH) {
         Return $true
     }
     Else {
