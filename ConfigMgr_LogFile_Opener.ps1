@@ -35,7 +35,7 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-09-30
+    Date modified: 2020-10-09
     Version:       3.0.0
 #>
 
@@ -389,6 +389,7 @@ Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
 
         # Write path into open dialog
         $shellObj.SendKeys($path)
+        Start-Sleep -Milliseconds $actionDelayShort
 
         # Send Enter to switch to the specified path
         $shellObj.SendKeys('{ENTER}')
@@ -1461,7 +1462,7 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch) {
         53 {Open-Path -Path 'C$\Windows\Logs\Software'}
         54 {Open-Path -Path 'C$\Windows\Temp'}
         93 {Invoke-RecentLogMenu}
-        94 {Invoke-MainMenu}
+        94 {Invoke-MainMenu -FirstLaunch}
         96 {Invoke-ClientActionMenu}
         97 {Invoke-LogProgram}
         98 {Invoke-MainMenu -ResetHostname}
