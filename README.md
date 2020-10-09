@@ -21,7 +21,7 @@ The Full Description and Usage Documentation can be found on my blog: https://ms
 `-OneTrace` |  Can be used to specify a different location for CMPowerLogViewer.exe. The Tool will look by default at "CC:\Program Files (x86)\Configuration Manager Support Center\CMPowerLogViewer.exe".
 `-ClientLogFilesDir` |  Can be used to specify a different location for the ConfigMgr Client LogFiles. e.g. 'c$\Program Files\CCM\Logs'.
 `-ActionDelayShort` |  Can be used to specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 1500
-`-ActionDelayLong` |  Can be used to specify the amount of time in millisecond, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500
+`-ActionDelayLong` |  Can be used to specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500
 `-LogProgram` | Can be used to specify which Log Program should be active when the tool is starting. Possible values are "CMTrace, "CMLogViewer" and "OneTrace". Default value is 'CMTrace'.
 `-LogProgramWindowStyle` |  Can be used to specify the WindowStyle of CMTrace and File Explorer. Possible values are "Minimied", "Maximized" and "Normal". Default value is 'Normal'"
 `-DisableHistoryLogFiles` |  If specified, the Tool won’t open any history log files
