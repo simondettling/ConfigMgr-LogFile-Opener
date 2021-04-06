@@ -1,7 +1,7 @@
 # ConfigMgr-LogFile-Opener
 ![Alt Text](https://msitproblog.com/wp-content/uploads/2021/04/configmgr_logfile_opener_3.0.1_part1.jpg)
 ![Alt Text](https://msitproblog.com/wp-content/uploads/2021/04/configmgr_logfile_opener_3.0.1_part2.jpg)
-![Alt Text](https://msitproblog.com/wp-content/uploads/2021/04/configmgr_logfile_opener_3.0.1_part3.jpg)
+![Alt Text](https://msitproblog.com/wp-content/uploads/2021/04/configmgr_logfile_opener_3.0.1_part4.jpg)
 
 ## Description
 This Tool automates the usage of CMTrace, CMLogViewer and OneTrace for opening single or multiple ConfigMgr Client LogFiles. Besides handling LogFiles, the Tool can be used to execute the most common ConfigMgr Client actions.
