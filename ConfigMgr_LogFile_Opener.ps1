@@ -35,7 +35,7 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-12-17
+    Date modified: 2020-04-06
     Version:       3.0.1
 #>
 
@@ -199,6 +199,7 @@ $ccmBuildNoTable = @{
     '8968' = 'CB 2002'
     '9012' = 'CB 2006'
     '9040' = 'CB 2010'
+    '9049' = 'CB 2103'
 }
 
 $consoleExtensionXmlFile = 'ConfigMgr LogFile Opener.xml'
