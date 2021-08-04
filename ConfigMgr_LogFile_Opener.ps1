@@ -35,8 +35,8 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-04-06
-    Version:       3.0.1
+    Date modified: 2020-08-04
+    Version:       3.0.2
 #>
 
 [CmdletBinding()]
@@ -84,7 +84,7 @@ Param(
 )
 
 # General options
-$toolVersion = "3.0.1"
+$toolVersion = "3.0.2"
 $updateUrl = "https://msitproblog.com/clfo_options.xml"
 
 # Add Visual Basic Assembly for displaying message popups
@@ -200,6 +200,7 @@ $ccmBuildNoTable = @{
     '9012' = 'CB 2006'
     '9040' = 'CB 2010'
     '9049' = 'CB 2103'
+    '9058' = 'CB 2107'
 }
 
 $consoleExtensionXmlFile = 'ConfigMgr LogFile Opener.xml'
