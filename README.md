@@ -1,6 +1,6 @@
 # ConfigMgr-LogFile-Opener
-![Alt Text](https://msitproblog.com/wp-content/uploads/2022/04/configmgr_logfile_opener_3.0.3_part3.jpg)
-![Alt Text](https://msitproblog.com/wp-content/uploads/2022/04/configmgr_logfile_opener_3.0.3_part3.jpg)
+![Alt Text](https://msitproblog.com/wp-content/uploads/2022/04/configmgr_logfile_opener_3.0.3_part1.jpg)
+![Alt Text](https://msitproblog.com/wp-content/uploads/2022/04/configmgr_logfile_opener_3.0.3_part2.jpg)
 ![Alt Text](https://msitproblog.com/wp-content/uploads/2022/04/configmgr_logfile_opener_3.0.3_part3.jpg)
 
 ## Description
