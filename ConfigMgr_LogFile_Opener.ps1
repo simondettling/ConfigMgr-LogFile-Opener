@@ -35,8 +35,8 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2020-08-04
-    Version:       3.0.2
+    Date modified: 2022-08-16
+    Version:       3.0.4
 #>
 
 [CmdletBinding()]
@@ -84,7 +84,7 @@ Param(
 )
 
 # General options
-$toolVersion = "3.0.2"
+$toolVersion = "3.0.4"
 $updateUrl = "https://msitproblog.com/clfo_options.xml"
 
 # Add Visual Basic Assembly for displaying message popups
@@ -201,6 +201,9 @@ $ccmBuildNoTable = @{
     '9040' = 'CB 2010'
     '9049' = 'CB 2103'
     '9058' = 'CB 2107'
+    '9068' = 'CB 2111'
+    '9078' = 'CB 2203'
+    '9088' = 'CB 2207'
 }
 
 $consoleExtensionXmlFile = 'ConfigMgr LogFile Opener.xml'
@@ -442,7 +445,7 @@ Function Open-Path ([String] $Path) {
     }
 }
 
-Function Invoke-ClientAction([String[]] $Action, [String] $LogFile) {
+Function Invoke-ClientAction([String[]] $Action, [String] $LogFile, [bool] $ActionOnly = $false) {
     Try {
         # Set ErrorActionPreference to stop, otherwise Try/Catch won't have an effect on Invoke-WmiMethod
         $ErrorActionPreference = 'Stop'
@@ -458,13 +461,16 @@ Function Invoke-ClientAction([String[]] $Action, [String] $LogFile) {
             }
         }
 
-        # Display message box
-        Invoke-MessageBox -Message 'The Client Action has been executed' -Icon 'Information'
+        If ($actionOnly -eq $false) {
+            # Display message box
+            Invoke-MessageBox -Message 'The Client Action has been executed' -Icon 'Information'
 
-        # Open corresponding log file
-        If ($enableAutoLogLaunch -and $logFile -ne '') {
-            Open-LogFile -Action $LogFile
+            # Open corresponding log file
+            If ($enableAutoLogLaunch -and $logFile -ne '') {
+                Open-LogFile -Action $LogFile
+            }
         }
+
     }
     Catch {
         # Display error message in case of a failure and return to the client action menu
@@ -984,7 +990,7 @@ Function Invoke-CcmRepair {
 Function Invoke-CcmPolicyReset {
     $ErrorActionPreference = 'Stop'
 
-    If ((Invoke-MessageBox -Message "Do you really want to reset the ConfigMgr Policies on $($hostname)?" -Icon Information -Button YesNo) -eq "Yes") {
+    If ((Invoke-MessageBox -Message "Do you really want to reset the ConfigMgr Policies on $($hostname)? This takes about 10 seconds and invokes a complete Policy Download afterwards." -Icon Information -Button YesNo) -eq "Yes") {
         Try {
             # Connect to WMI
             If ($hostnameIsRemote) {
@@ -994,9 +1000,17 @@ Function Invoke-CcmPolicyReset {
                 $wmi = [wmiclass] "\root\ccm:sms_client"
             }
 
-            # Trigger Policy Reset
-            If ($wmi.ResetPolicy()) {
-                Invoke-MessageBox -Message "ConfigMgr Policies have been successfully reseted on $($hostname)." -Icon Information
+            # Trigger Policy Reset and purge existing polices
+            If ($wmi.ResetPolicy(1)) {
+                # Invoke Machine Policy Agent Cleanup
+                Start-Sleep -Seconds 5
+                Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000040' -ActionOnly $true
+
+                # Invoke Request Machine Assignments
+                Start-Sleep -Seconds 5
+                Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000021' -ActionOnly $true
+
+                Invoke-MessageBox -Message "ConfigMgr Policies have been successfully reseted on $($hostname) and new Policies have been polled." -Icon Information
 
                 # Open corresponding log file
                 If ($enableAutoLogLaunch) {
