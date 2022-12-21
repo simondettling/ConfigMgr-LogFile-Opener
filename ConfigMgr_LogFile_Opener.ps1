@@ -35,8 +35,8 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2022-08-16
-    Version:       3.0.4
+    Date modified: 2022-12-21
+    Version:       3.0.5
 #>
 
 [CmdletBinding()]
@@ -50,8 +50,8 @@ Param(
     [Parameter(Mandatory=$false, HelpMessage='Specify the Path to CMLogViewer.exe')]
     [String] $CMLogViewer = 'C:\Program Files (x86)\Configuration Manager Support Center\CMLogViewer.exe',
 
-    [Parameter(Mandatory=$false, HelpMessage='Specify the Path to CMLogViewer.exe')]
-    [String] $OneTrace = 'C:\Program Files (x86)\Configuration Manager Support Center\CMPowerLogViewer.exe',
+    [Parameter(Mandatory=$false, HelpMessage='Specify the Path to CMOneTrace.exe')]
+    [String] $OneTrace = 'C:\Program Files (x86)\Configuration Manager Support Center\CMOneTrace.exe',
 
     [Parameter(Mandatory=$false, HelpMessage='Specify the directory in which the ConfigMgr Client Logfiles are located. (e.g: "Program Files\CCM\Logs")')]
     [String] $ClientLogFilesDir = 'C$\Windows\CCM\Logs',
@@ -84,7 +84,7 @@ Param(
 )
 
 # General options
-$toolVersion = "3.0.4"
+$toolVersion = "3.0.5"
 $updateUrl = "https://msitproblog.com/clfo_options.xml"
 
 # Add Visual Basic Assembly for displaying message popups
@@ -204,6 +204,7 @@ $ccmBuildNoTable = @{
     '9068' = 'CB 2111'
     '9078' = 'CB 2203'
     '9088' = 'CB 2207'
+    '9096' = 'CB 2211'
 }
 
 $consoleExtensionXmlFile = 'ConfigMgr LogFile Opener.xml'
