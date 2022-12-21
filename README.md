@@ -18,7 +18,7 @@ The Full Description and Usage Documentation can be found on my blog: https://ms
 `-Hostname` |  Can be used for a direct connection to a client device. Otherwise the Tool will prompt you to specify the Hostname
 `-CMTrace` |  Can be used to specify a different location for CMTrace.exe. The Tool will look by default at "C:\Windows\CMTrace.exe"
 `-CMLogViewer` |  Can be used to specify a different location for CMLogViewer.exe. The Tool will look by default at “C:\Program Files (x86)\Configuration Manager Support Center\CMLogViewer.exe”
-`-OneTrace` |  Can be used to specify a different location for CMPowerLogViewer.exe. The Tool will look by default at "C:\Program Files (x86)\Configuration Manager Support Center\CMPowerLogViewer.exe"
+`-OneTrace` |  Can be used to specify a different location for CMOneTrace.exe. The Tool will look by default at "C:\Program Files (x86)\Configuration Manager Support Center\CMOneTrace.exe"
 `-ClientLogFilesDir` |  Can be used to specify a different location for the ConfigMgr Client LogFiles. e.g. 'c$\Program Files\CCM\Logs'
 `-ActionDelayShort` |  Can be used to specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 1500
 `-ActionDelayLong` |  Can be used to specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500
