@@ -8,7 +8,7 @@
 .PARAMETER CMLogViewer
     Specify the Path to CMLogViewer.exe
 .PARAMETER OneTrace
-    Specify the Path to CMPowerLogViewer.exe
+    Specify the Path to CMOneTrace.exe
 .PARAMETER Hostname
     Specify a Default hostname for direct connection. Otherwise the Tool will prompt you to specify a hostname.
 .PARAMETER ClientLogFilesDir
