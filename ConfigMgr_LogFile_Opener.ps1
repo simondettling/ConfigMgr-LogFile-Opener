@@ -35,57 +35,57 @@
 .NOTES
     Script name:   ConfigMgr_LogFile_Opener.ps1
     Author:        @SimonDettling <msitproblog.com>
-    Date modified: 2022-12-21
-    Version:       3.0.5
+    Date modified: 2023-05-22
+    Version:       3.0.6
 #>
 
 [CmdletBinding()]
 Param(
-    [Parameter(Mandatory=$false, HelpMessage='Specify the hostname for direct connection. Otherwise the Tool will prompt you to specify a hostname.')]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the hostname for direct connection. Otherwise the Tool will prompt you to specify a hostname.')]
     [String] $Hostname = '',
 
-    [Parameter(Mandatory=$false, HelpMessage='Specify the Path to CMTrace.exe')]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the Path to CMTrace.exe')]
     [String] $CMTrace = 'C:\Windows\CCM\CMTrace.exe',
 
-    [Parameter(Mandatory=$false, HelpMessage='Specify the Path to CMLogViewer.exe')]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the Path to CMLogViewer.exe')]
     [String] $CMLogViewer = 'C:\Program Files (x86)\Configuration Manager Support Center\CMLogViewer.exe',
 
-    [Parameter(Mandatory=$false, HelpMessage='Specify the Path to CMOneTrace.exe')]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the Path to CMOneTrace.exe')]
     [String] $OneTrace = 'C:\Program Files (x86)\Configuration Manager Support Center\CMOneTrace.exe',
 
-    [Parameter(Mandatory=$false, HelpMessage='Specify the directory in which the ConfigMgr Client Logfiles are located. (e.g: "Program Files\CCM\Logs")')]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the directory in which the ConfigMgr Client Logfiles are located. (e.g: "Program Files\CCM\Logs")')]
     [String] $ClientLogFilesDir = 'C$\Windows\CCM\Logs',
 
-    [Parameter(Mandatory=$false, HelpMessage="Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 1500")]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 1500')]
     [Int] $ActionDelayShort = 1700,
 
-    [Parameter(Mandatory=$false, HelpMessage="Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500")]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the amount of time in milliseconds, the Script should wait between the Steps when opening multiple LogFiles in GUI Mode. Default value is 2500')]
     [Int] $ActionDelayLong = 3500,
 
-    [Parameter(Mandatory=$false, HelpMessage="Specify which Log Program should be active when the tool is starting. Default value is 'CMTrace'")]
+    [Parameter(Mandatory = $false, HelpMessage = "Specify which Log Program should be active when the tool is starting. Default value is 'CMTrace'")]
     [ValidateSet('CMTrace', 'CMLogViewer', 'OneTrace')]
     [String] $LogProgram = 'CMTrace',
 
-    [Parameter(Mandatory=$false, HelpMessage="Specify the WindowStyle of CMTrace and File Explorer. Default value is 'normal'")]
+    [Parameter(Mandatory = $false, HelpMessage = "Specify the WindowStyle of CMTrace and File Explorer. Default value is 'normal'")]
     [ValidateSet('Minimized', 'Maximized', 'Normal')]
     [String] $LogProgramWindowStyle = 'Normal',
 
-    [Parameter(Mandatory=$false, HelpMessage="If specified, the Tool won't open any history log files. Opening history log files is currently only supported with CMLogViewer.")]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, the Tool won't open any history log files. Opening history log files is currently only supported with CMLogViewer.")]
     [Switch] $DisableHistoryLogFiles,
 
-    [Parameter(Mandatory=$false, HelpMessage="Specify the number of recent log files which will be listed in the menu. Default value is 15")]
+    [Parameter(Mandatory = $false, HelpMessage = 'Specify the number of recent log files which will be listed in the menu. Default value is 15')]
     [Int] $RecentLogLimit = 15,
 
-    [Parameter(Mandatory=$false, HelpMessage="If specified, the Tool won't prompt if there is a newer Version available")]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, the Tool won't prompt if there is a newer Version available")]
     [Switch] $DisableUpdater,
 
-    [Parameter(Mandatory=$false, HelpMessage="If specified, the Tool will automatically open the corresponding logs when executing client actions.")]
+    [Parameter(Mandatory = $false, HelpMessage = 'If specified, the Tool will automatically open the corresponding logs when executing client actions.')]
     [Switch] $EnableAutoLogLaunch
 )
 
 # General options
-$toolVersion = "3.0.5"
-$updateUrl = "https://msitproblog.com/clfo_options.xml"
+$toolVersion = '3.0.5'
+$updateUrl = 'https://msitproblog.com/clfo_options.xml'
 
 # Add Visual Basic Assembly for displaying message popups
 [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
@@ -97,83 +97,83 @@ $shellObj = New-Object -ComObject WScript.Shell
 $hostnameIsRemote = $true
 
 # Get date time Pattern for Date/Time Conversion
-$dateTimePattern = (Get-Culture).DateTimeFormat.ShortDatePattern  + " " + (Get-Culture).DateTimeFormat.ShortTimePattern
+$dateTimePattern = (Get-Culture).DateTimeFormat.ShortDatePattern + ' ' + (Get-Culture).DateTimeFormat.ShortTimePattern
 
 $logfileTable = @{
-    'ccmsetup' = @{
-        'path' = 'C$\Windows\ccmsetup\Logs'
+    'ccmsetup'             = @{
+        'path'     = 'C$\Windows\ccmsetup\Logs'
         'logfiles' = @('ccmsetup.log')
     }
-    'ccmupdate' = @{
-        'path' = $clientLogfilesDir
+    'ccmupdate'            = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('ScanAgent.log', 'UpdatesDeployment.log', 'UpdatesHandler.log', 'UpdatesStore.log', 'WUAHandler.log')
     }
-    'winupdate' = @{
-        'path' = 'C$\Windows'
+    'winupdate'            = @{
+        'path'     = 'C$\Windows'
         'logfiles' = @('WindowsUpdate.log')
     }
-    'ccmappdiscovery' = @{
-        'path' = $clientLogfilesDir
+    'ccmappdiscovery'      = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('AppDiscovery.log')
     }
-    'ccmappenforce' = @{
-        'path' = $clientLogfilesDir
+    'ccmappenforce'        = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('AppEnforce.log')
     }
-    'ccmexecmgr' = @{
-        'path' = $clientLogfilesDir
+    'ccmexecmgr'           = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('execmgr.log')
     }
-    'ccmexec' = @{
-        'path' = $clientLogfilesDir
+    'ccmexec'              = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('CcmExec.log')
     }
-    'ccmstartup' = @{
-        'path' = $clientLogfilesDir
+    'ccmstartup'           = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('ClientIDManagerStartup.log')
     }
-    'ccmpolicy' = @{
-        'path' = $clientLogfilesDir
+    'ccmpolicy'            = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('PolicyAgent.log', 'PolicyAgentProvider.log', 'PolicyEvaluator.log', 'StatusAgent.log')
     }
-    'ccmepagent' = @{
-        'path' = $clientLogfilesDir
+    'ccmepagent'           = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('EndpointProtectionAgent.log')
     }
-    'ccmdownload' = @{
-        'path' = $clientLogfilesDir
+    'ccmdownload'          = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('CAS.log', 'CIDownloader.log', 'DataTransferService.log')
     }
-    'ccmsetupeval' = @{
-        'path' = 'C$\Windows\ccmsetup\Logs'
+    'ccmsetupeval'         = @{
+        'path'     = 'C$\Windows\ccmsetup\Logs'
         'logfiles' = @('ccmsetup-ccmeval.log')
     }
-    'ccminventory' = @{
-        'path' = $clientLogfilesDir
+    'ccminventory'         = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('InventoryAgent.log', 'InventoryProvider.log')
     }
-    'ccmsmsts' = @{
-        'path' = $clientLogfilesDir
+    'ccmsmsts'             = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('smsts.log')
     }
-    'ccmstatemessage' = @{
-        'path' = $clientLogfilesDir
+    'ccmstatemessage'      = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('StateMessage.log')
     }
-    'ccmscript' = @{
-        'path' = $clientLogfilesDir
+    'ccmscript'            = @{
+        'path'     = $clientLogfilesDir
         'logfiles' = @('Scripts.log')
     }
     'winservicingsetupact' = @{
-        'path' = 'C$\Windows\Panther'
+        'path'     = 'C$\Windows\Panther'
         'logfiles' = @('setupact.log')
     }
     'winservicingsetuperr' = @{
-        'path' = 'C$\Windows\Panther'
+        'path'     = 'C$\Windows\Panther'
         'logfiles' = @('setuperr.log')
     }
-    'scepmpcmdrun' = @{
-        'path' = 'C$\Windows\Temp'
+    'scepmpcmdrun'         = @{
+        'path'     = 'C$\Windows\Temp'
         'logfiles' = @('MpCmdRun.log')
     }
 }
@@ -205,6 +205,7 @@ $ccmBuildNoTable = @{
     '9078' = 'CB 2203'
     '9088' = 'CB 2207'
     '9096' = 'CB 2211'
+    '9106' = 'CB 2303'
 }
 
 $consoleExtensionXmlFile = 'ConfigMgr LogFile Opener.xml'
@@ -228,7 +229,7 @@ $consoleExtensionXmlContent = '<ActionDescription Class="Executable" DisplayName
 
 Function Open-LogFile ([String] $Action) {
     # Get action from Hash Table, and throw error if it does not exist
-    $actionHandler = $logfileTable.GetEnumerator() | Where-Object {$_.Key -eq $action}
+    $actionHandler = $logfileTable.GetEnumerator() | Where-Object { $_.Key -eq $action }
     If (!$actionHandler) {
         Invoke-MessageBox -Message "Action '$action' can not be found in Hash Table"
         Return
@@ -297,7 +298,7 @@ Function Invoke-CMTrace ([String] $Path, [Array] $Files) {
     # Check if one file was specified
     ElseIf ($files.Count -eq 1) {
         # Build full logfile path
-        $fullLogfilePath = $path + '\' + [String]::Join(" ", $files)
+        $fullLogfilePath = $path + '\' + [String]::Join(' ', $files)
 
         # Check if Logfile exists
         If (!(Test-Path -Path $fullLogfilePath)) {
@@ -325,8 +326,12 @@ Function Invoke-CMTrace ([String] $Path, [Array] $Files) {
 
     # Check WindowStyle. NOTE: CMTrace can't be launched using the native 'WindowStyle' Attribute via Start-Process above.
     Switch ($logProgramWindowStyle) {
-        'Minimized' {$shellObj.SendKeys('% n')}
-        'Maximized' {$shellObj.SendKeys('% x')}
+        'Minimized' {
+            $shellObj.SendKeys('% n')
+        }
+        'Maximized' {
+            $shellObj.SendKeys('% x')
+        }
     }
 }
 
@@ -416,8 +421,12 @@ Function Invoke-OneTrace ([String] $Path, [Array] $Files) {
 
     # Check WindowStyle. NOTE: OneTrace can't be launched using the native 'WindowStyle' Attribute via Start-Process above.
     Switch ($logProgramWindowStyle) {
-        'Minimized' {$shellObj.SendKeys('% n')}
-        'Maximized' {$shellObj.SendKeys('% x')}
+        'Minimized' {
+            $shellObj.SendKeys('% n')
+        }
+        'Maximized' {
+            $shellObj.SendKeys('% x')
+        }
     }
 }
 
@@ -440,7 +449,8 @@ Function Open-Path ([String] $Path) {
     # Check if path is accessible
     If (!(Test-Path -Path $logfilePath)) {
         Invoke-MessageBox -Message "'$logfilePath' is not accessible!"
-    } Else {
+    }
+    Else {
         # Open File explorer
         Start-Process -FilePath 'C:\Windows\explorer.exe' -ArgumentList $logfilePath -WindowStyle $logProgramWindowStyle
     }
@@ -480,7 +490,7 @@ Function Invoke-ClientAction([String[]] $Action, [String] $LogFile, [bool] $Acti
     }
 }
 
-Function Invoke-MessageBox([String] $Message, [String] $Icon = 'Critical', [String] $Button = "OKOnly") {
+Function Invoke-MessageBox([String] $Message, [String] $Icon = 'Critical', [String] $Button = 'OKOnly') {
     Return [Microsoft.VisualBasic.Interaction]::MsgBox($message, "$button,MsgBoxSetForeground,$icon", 'ConfigMgr LogFile Opener')
 }
 
@@ -498,7 +508,7 @@ Function Get-ClientVersionString {
         $ccmBuildNo = $clientVersion.Split('.')[2]
 
         # Get BuildNo String from hash table
-        $ccmBuildNoHandler = $ccmBuildNoTable.GetEnumerator() | Where-Object {$_.Key -eq $ccmBuildNo}
+        $ccmBuildNoHandler = $ccmBuildNoTable.GetEnumerator() | Where-Object { $_.Key -eq $ccmBuildNo }
 
         # Build client version string
         If ($ccmBuildNoHandler) {
@@ -524,14 +534,14 @@ Function Get-OperatingSystemData {
     Try {
         # Get operating system data from WMI
         If ($hostnameIsRemote) {
-            $osCimObject = Get-CimInstance -ComputerName $hostname -ClassName 'Win32_OperatingSystem' -Property Caption,Version,OSArchitecture,LastBootUpTime -ErrorAction SilentlyContinue
+            $osCimObject = Get-CimInstance -ComputerName $hostname -ClassName 'Win32_OperatingSystem' -Property Caption, Version, OSArchitecture, LastBootUpTime -ErrorAction SilentlyContinue
             $sysCimObject = Get-CimInstance -ComputerName $hostname -ClassName 'Win32_ComputerSystem' -Property Domain -ErrorAction SilentlyContinue
-            $ubrCimObject = Invoke-CimMethod -ComputerName $hostname -Namespace "root\default" -ClassName StdRegProv -MethodName GetDwordValue -Arguments @{hDefKey = $ubrKey; sSubKeyName = $ubrSubKeyName; sValueName = $ubrValueName} -ErrorAction SilentlyContinue
+            $ubrCimObject = Invoke-CimMethod -ComputerName $hostname -Namespace 'root\default' -ClassName StdRegProv -MethodName GetDwordValue -Arguments @{hDefKey = $ubrKey; sSubKeyName = $ubrSubKeyName; sValueName = $ubrValueName } -ErrorAction SilentlyContinue
         }
         Else {
-            $osCimObject = Get-CimInstance -ClassName 'Win32_OperatingSystem' -Property Caption,Version,OSArchitecture,LastBootUpTime -ErrorAction SilentlyContinue
+            $osCimObject = Get-CimInstance -ClassName 'Win32_OperatingSystem' -Property Caption, Version, OSArchitecture, LastBootUpTime -ErrorAction SilentlyContinue
             $sysCimObject = Get-CimInstance -ClassName 'Win32_ComputerSystem' -Property Domain -ErrorAction SilentlyContinue
-            $ubrCimObject = Invoke-CimMethod -Namespace "root\default" -ClassName StdRegProv -MethodName GetDwordValue -Arguments @{hDefKey = $ubrKey; sSubKeyName = $ubrSubKeyName; sValueName = $ubrValueName} -ErrorAction SilentlyContinue
+            $ubrCimObject = Invoke-CimMethod -Namespace 'root\default' -ClassName StdRegProv -MethodName GetDwordValue -Arguments @{hDefKey = $ubrKey; sSubKeyName = $ubrSubKeyName; sValueName = $ubrValueName } -ErrorAction SilentlyContinue
         }
 
         # Remove unneeded things from OS caption
@@ -540,7 +550,7 @@ Function Get-OperatingSystemData {
         $data.osString = $data.osString.Replace('Standard', 'Std.')
 
         # Add Architecture if this is a non Server Operating System
-        If ($data.osString -notmatch "Windows Server*") {
+        If ($data.osString -notmatch 'Windows Server*') {
             $data.osString = $data.osString + " $($osCimObject.OSArchitecture)"
         }
 
@@ -566,13 +576,13 @@ Function Get-ModelString {
     Try {
         # Get client version from WMI
         If ($hostnameIsRemote) {
-            $cimObject = Get-CimInstance -ComputerName $hostname -ClassName 'Win32_ComputerSystemProduct' -Property Vendor,Version -ErrorAction SilentlyContinue
+            $cimObject = Get-CimInstance -ComputerName $hostname -ClassName 'Win32_ComputerSystemProduct' -Property Vendor, Version -ErrorAction SilentlyContinue
         }
         Else {
-            $cimObject = Get-CimInstance -ClassName 'Win32_ComputerSystemProduct' -Property Vendor,Version -ErrorAction SilentlyContinue
+            $cimObject = Get-CimInstance -ClassName 'Win32_ComputerSystemProduct' -Property Vendor, Version -ErrorAction SilentlyContinue
         }
 
-        If ($cimObject.Vendor -eq "HP") {
+        If ($cimObject.Vendor -eq 'HP') {
             # Special Handling for HP Devices
             If ($hostnameIsRemote) {
                 $cimObject2 = Get-CimInstance -ComputerName $hostname -ClassName 'Win32_ComputerSystem' -Property Model -ErrorAction SilentlyContinue
@@ -609,15 +619,15 @@ Function Get-RecentLog {
     }
 
     # Get Recent Log Files
-    $logs = Get-ChildItem $logfilePath | Sort-Object LastWriteTime -Descending | Select-Object Name,LastWriteTime -First $RecentLogLimit
+    $logs = Get-ChildItem $logfilePath | Sort-Object LastWriteTime -Descending | Select-Object Name, LastWriteTime -First $RecentLogLimit
 
     $list = @{}
     $listIndex = 1
     foreach ($log in $logs) {
         # Add Log data into hash table
         $list[$listIndex] += @{
-            'Name' = $log.Name
-            'Path' = $logfilePath
+            'Name'          = $log.Name
+            'Path'          = $logfilePath
             'LastWriteTime' = Get-Date $log.LastWriteTime -Format $dateTimePattern
         }
         $listIndex++
@@ -642,12 +652,12 @@ Function Test-Elevation {
 
 Function Install-ConsoleExtension {
     If (!(Test-ConsoleInstallation)) {
-        Invoke-MessageBox -Message "No ConfigMgr Console found on this System."
+        Invoke-MessageBox -Message 'No ConfigMgr Console found on this System.'
         Return
     }
 
     If (!(Test-Elevation)) {
-        Invoke-MessageBox -Message "Please run ConfigMgr LogFile Opener as an Administrator to install the Console Extension."
+        Invoke-MessageBox -Message 'Please run ConfigMgr LogFile Opener as an Administrator to install the Console Extension.'
         Return
     }
 
@@ -664,12 +674,12 @@ Function Install-ConsoleExtension {
         $consoleExtensionXmlContent | Out-File "$path\$consoleExtensionXmlFile" -Force -Encoding UTF8
     }
 
-    Invoke-MessageBox -Message "Console Extension successfully installed/updated. Please restart all open ConfigMgr Consoles." -Icon Information
+    Invoke-MessageBox -Message 'Console Extension successfully installed/updated. Please restart all open ConfigMgr Consoles.' -Icon Information
 }
 
 Function Remove-ConsoleExtension {
     If (!(Test-Elevation)) {
-        Invoke-MessageBox -Message "Please run this tool as an Administrator to remove the Console Extension."
+        Invoke-MessageBox -Message 'Please run this tool as an Administrator to remove the Console Extension.'
         Return
     }
 
@@ -683,7 +693,7 @@ Function Remove-ConsoleExtension {
         }
     }
 
-    Invoke-MessageBox -Message "Console Extension successfully removed. Please restart all open ConfigMgr Consoles." -Icon Information
+    Invoke-MessageBox -Message 'Console Extension successfully removed. Please restart all open ConfigMgr Consoles.' -Icon Information
 }
 
 Function Invoke-ToolUpdater {
@@ -704,16 +714,16 @@ Function Invoke-ToolUpdater {
     }
 
     If ([System.Version] $toolVersion -lt [System.Version] $currentVersion) {
-        $response = [Microsoft.VisualBasic.Interaction]::MsgBox("Version $currentVersion of ConfigMgr LogFile Opener is available. Do you want to Download the latest version?", "YesNo,MsgBoxSetForeground,Information", "ConfigMgr LogFile Opener - $toolVersion")
+        $response = [Microsoft.VisualBasic.Interaction]::MsgBox("Version $currentVersion of ConfigMgr LogFile Opener is available. Do you want to Download the latest version?", 'YesNo,MsgBoxSetForeground,Information', "ConfigMgr LogFile Opener - $toolVersion")
 
-        If ($response -eq "Yes") {
+        If ($response -eq 'Yes') {
             Start-Process $downloadPage
         }
     }
 }
 
 Function Stop-CcmExec {
-    If ((Invoke-MessageBox -Message "Do you really want to stop the ConfigMgr Client service on $($hostname)?" -Icon Information -Button YesNo) -eq "Yes") {
+    If ((Invoke-MessageBox -Message "Do you really want to stop the ConfigMgr Client service on $($hostname)?" -Icon Information -Button YesNo) -eq 'Yes') {
         Try {
             If ($hostnameIsRemote) {
                 $serviceObject = Get-Service -Name CcmExec -ComputerName $hostname | Stop-Service -PassThru
@@ -722,7 +732,7 @@ Function Stop-CcmExec {
                 $serviceObject = Get-Service -Name CcmExec | Stop-Service -PassThru
             }
 
-            If ($serviceObject.Status -eq "Stopped") {
+            If ($serviceObject.Status -eq 'Stopped') {
                 Invoke-MessageBox -Message "ConfigMgr Client service successfully stopped on $($hostname)." -Icon Information
 
                 # Open corresponding log file
@@ -753,7 +763,7 @@ Function Start-CcmExec {
             $serviceObject = Get-Service -Name CcmExec | Start-Service -PassThru
         }
 
-        If ($serviceObject.Status -eq "Running") {
+        If ($serviceObject.Status -eq 'Running') {
             Invoke-MessageBox -Message "ConfigMgr Client service successfully started on $($hostname)." -Icon Information
 
             # Open corresponding log file
@@ -775,7 +785,7 @@ Function Start-CcmExec {
 Function Restart-CcmExec {
     $ErrorActionPreference = 'Stop'
 
-    If ((Invoke-MessageBox -Message "Do you really want to restart the ConfigMgr Client service on $($hostname)?" -Icon Information -Button YesNo) -eq "Yes") {
+    If ((Invoke-MessageBox -Message "Do you really want to restart the ConfigMgr Client service on $($hostname)?" -Icon Information -Button YesNo) -eq 'Yes') {
         Try {
             If ($hostnameIsRemote) {
                 $serviceObject = Get-Service -Name CcmExec -ComputerName $hostname | Restart-Service -PassThru
@@ -784,7 +794,7 @@ Function Restart-CcmExec {
                 $serviceObject = Get-Service -Name CcmExec | Restart-Service -PassThru
             }
 
-            If ($serviceObject.Status -eq "Running") {
+            If ($serviceObject.Status -eq 'Running') {
                 # Open corresponding log file
                 If ($enableAutoLogLaunch) {
                     Open-LogFile -Action 'ccmexec'
@@ -817,24 +827,25 @@ Function Invoke-ConfigurationBaselineEvaluation {
         }
         Else {
             Get-CimInstance -ClassName 'SMS_DesiredConfiguration' -Namespace 'root\ccm\dcm' | ForEach-Object {
-                ([wmiclass]"root\ccm\dcm:SMS_DesiredConfiguration").TriggerEvaluation($_.Name, $_.Version) | Out-Null
+                ([wmiclass]'root\ccm\dcm:SMS_DesiredConfiguration').TriggerEvaluation($_.Name, $_.Version) | Out-Null
                 $baselineCount++
             }
         }
 
         If ($baselineCount -eq 1) {
             $messageText = "$baselineCount Configuration Baseline has been reevaluated on $($hostname)."
-        } Else {
+        }
+        Else {
             $messageText = "$baselineCount Configuration Baselines have been reevaluated on $($hostname)."
         }
 
         Invoke-MessageBox -Message $messageText -Icon Information
-     }
-     Catch {
+    }
+    Catch {
         # Display error message in case of a failure and return to the client action menu
         $errorMessage = $_.Exception.Message
         Invoke-MessageBox -Message "Unable to reevaluate Configuration Baselines on $($hostname).`n`n$errorMessage"
-     }
+    }
 }
 
 Function Invoke-CcmEval {
@@ -846,13 +857,13 @@ Function Invoke-CcmEval {
             $cimSession = New-CimSession -ComputerName $hostname
 
             # Run ccmeeval Task on target computer
-            Start-ScheduledTask -CimSession $cimSession -TaskPath "\Microsoft\Configuration Manager" -TaskName "Configuration Manager Health Evaluation"
+            Start-ScheduledTask -CimSession $cimSession -TaskPath '\Microsoft\Configuration Manager' -TaskName 'Configuration Manager Health Evaluation'
 
             # Terminate PowerShell Session
             Remove-CimSession -CimSession $cimSession
         }
         Else {
-            Start-ScheduledTask -TaskPath "\Microsoft\Configuration Manager" -TaskName "Configuration Manager Health Evaluation"
+            Start-ScheduledTask -TaskPath '\Microsoft\Configuration Manager' -TaskName 'Configuration Manager Health Evaluation'
         }
 
         Invoke-MessageBox -Message "ConfigMgr Client Evaluation has been executed on $($hostname)." -Icon Information
@@ -887,7 +898,8 @@ Function Update-SoftwareUpdateComplianceState {
 
             # Terminate PowerShell Session
             Remove-PSSession -Session $psSession
-        } Else {
+        }
+        Else {
             $updatesStore = New-Object -ComObject Microsoft.CCM.UpdatesStore
             $updatesStore.RefreshServerComplianceState()
         }
@@ -921,27 +933,33 @@ Function Get-IPAddressString {
         Else {
             # Determine Client IP address via DNS
             # TODO: This is currently limited to IPv4 and a single ip address
-            $ipAddress = Resolve-DnsName $hostname | Where-Object {$_.Type -eq "A"} | Select-Object -ExpandProperty IPAddress -First 1
+            $ipAddress = Resolve-DnsName $hostname | Where-Object { $_.Type -eq 'A' } | Select-Object -ExpandProperty IPAddress -First 1
         }
 
         # Determine adapter type
         If ($hostnameIsRemote) {
-            $netAdapterName = Get-CimInstance -ComputerName $hostname -ClassName Win32_NetworkAdapterConfiguration | Where-Object {$_.IPAddress -eq $ipAddress} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Description
-            $adapterTypeID = Get-CimInstance -ComputerName $hostname -Namespace "root/WMI" -Class MSNdis_PhysicalMediumType -ErrorAction SilentlyContinue | Where-Object {$_.InstanceName -eq $netAdapterName} | Select-Object -ExpandProperty NdisPhysicalMediumType
+            $netAdapterName = Get-CimInstance -ComputerName $hostname -ClassName Win32_NetworkAdapterConfiguration | Where-Object { $_.IPAddress -eq $ipAddress } -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Description
+            $adapterTypeID = Get-CimInstance -ComputerName $hostname -Namespace 'root/WMI' -Class MSNdis_PhysicalMediumType -ErrorAction SilentlyContinue | Where-Object { $_.InstanceName -eq $netAdapterName } | Select-Object -ExpandProperty NdisPhysicalMediumType
         }
         Else {
-            $netAdapterName = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration | Where-Object {$_.IPAddress -eq $ipAddress} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Description
-            $adapterTypeID = Get-CimInstance -Namespace "root/WMI" -Class MSNdis_PhysicalMediumType -ErrorAction SilentlyContinue | Where-Object {$_.InstanceName -eq $netAdapterName} | Select-Object -ExpandProperty NdisPhysicalMediumType
+            $netAdapterName = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration | Where-Object { $_.IPAddress -eq $ipAddress } -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Description
+            $adapterTypeID = Get-CimInstance -Namespace 'root/WMI' -Class MSNdis_PhysicalMediumType -ErrorAction SilentlyContinue | Where-Object { $_.InstanceName -eq $netAdapterName } | Select-Object -ExpandProperty NdisPhysicalMediumType
         }
 
-        $adapterType = ""
+        $adapterType = ''
         Switch ($adapterTypeID) {
-            0 {$adapterType = 'LAN'}
-            9 {$adapterType = 'WLAN'}
-            8 {$adapterType = 'WWAN'}
+            0 {
+                $adapterType = 'LAN'
+            }
+            9 {
+                $adapterType = 'WLAN'
+            }
+            8 {
+                $adapterType = 'WWAN'
+            }
         }
 
-        If ($adapterType -eq "") {
+        If ($adapterType -eq '') {
             Return "$ipAddress"
         }
         Else {
@@ -957,14 +975,14 @@ Function Get-IPAddressString {
 Function Invoke-CcmRepair {
     $ErrorActionPreference = 'Stop'
 
-    If ((Invoke-MessageBox -Message "Do you really want to repair the ConfigMgr Client on $($hostname)?" -Icon Information -Button YesNo) -eq "Yes") {
+    If ((Invoke-MessageBox -Message "Do you really want to repair the ConfigMgr Client on $($hostname)?" -Icon Information -Button YesNo) -eq 'Yes') {
         Try {
             # Connect to WMI
             If ($hostnameIsRemote) {
                 $wmi = [wmiclass] "\\$hostname\root\ccm:sms_client"
             }
             Else {
-                $wmi = [wmiclass] "\root\ccm:sms_client"
+                $wmi = [wmiclass] '\root\ccm:sms_client'
             }
 
             # Trigger Client Repair
@@ -991,14 +1009,14 @@ Function Invoke-CcmRepair {
 Function Invoke-CcmPolicyReset {
     $ErrorActionPreference = 'Stop'
 
-    If ((Invoke-MessageBox -Message "Do you really want to reset the ConfigMgr Policies on $($hostname)? This takes about 10 seconds and invokes a complete Policy Download afterwards." -Icon Information -Button YesNo) -eq "Yes") {
+    If ((Invoke-MessageBox -Message "Do you really want to reset the ConfigMgr Policies on $($hostname)? This takes about 10 seconds and invokes a complete Policy Download afterwards." -Icon Information -Button YesNo) -eq 'Yes') {
         Try {
             # Connect to WMI
             If ($hostnameIsRemote) {
                 $wmi = [wmiclass] "\\$hostname\root\ccm:sms_client"
             }
             Else {
-                $wmi = [wmiclass] "\root\ccm:sms_client"
+                $wmi = [wmiclass] '\root\ccm:sms_client'
             }
 
             # Trigger Policy Reset and purge existing polices
@@ -1032,7 +1050,7 @@ Function Invoke-CcmPolicyReset {
 
 Function Get-PendingRebootData {
     $pendingRebootData = @{
-        'state' = $false
+        'state'  = $false
         'string' = ''
     }
 
@@ -1052,39 +1070,39 @@ Function Get-PendingRebootData {
             If ($pendingReboot.IsRebootPending) {
                 # Check if there is a pending Reboot from the ConfigMgr Client
                 If ($pendingReboot.SystemCenterConfigManager) {
-                    $pendingRebootData.string = "ConfigMgr"
+                    $pendingRebootData.string = 'ConfigMgr'
                 }
 
                 # Check if there is a pending Reboot from Windows Update
                 If ($pendingReboot.WindowsUpdateAutoUpdate) {
-                    If ($pendingRebootData.string -ne "") {
-                        $pendingRebootData.string = $pendingRebootData.string + ", "
+                    If ($pendingRebootData.string -ne '') {
+                        $pendingRebootData.string = $pendingRebootData.string + ', '
                     }
-                    $pendingRebootData.string = $pendingRebootData.string + "Windows Update"
+                    $pendingRebootData.string = $pendingRebootData.string + 'Windows Update'
                 }
 
                 # Check if there is a pending Reboot from CBS
                 If ($pendingReboot.ComponentBasedServicing) {
-                    If ($pendingRebootData.string -ne "") {
-                        $pendingRebootData.string = $pendingRebootData.string + ", "
+                    If ($pendingRebootData.string -ne '') {
+                        $pendingRebootData.string = $pendingRebootData.string + ', '
                     }
-                    $pendingRebootData.string = $pendingRebootData.string + "CBS"
+                    $pendingRebootData.string = $pendingRebootData.string + 'CBS'
                 }
 
                 # Check if there is a pending Reboot from Computer Rename / Domain Join
                 If ($pendingReboot.PendingComputerRenameDomainJoin) {
-                    If ($pendingRebootData.string -ne "") {
-                        $pendingRebootData.string = $pendingRebootData.string + ", "
+                    If ($pendingRebootData.string -ne '') {
+                        $pendingRebootData.string = $pendingRebootData.string + ', '
                     }
-                    $pendingRebootData.string = $pendingRebootData.string + "Rename / Domain Join"
+                    $pendingRebootData.string = $pendingRebootData.string + 'Rename / Domain Join'
                 }
 
                 # Check if there are other Reboots from the Operating System
                 If ($pendingReboot.PendingFileRenameOperations) {
-                    If ($pendingRebootData.string -ne "") {
-                        $pendingRebootData.string = $pendingRebootData.string + ", "
+                    If ($pendingRebootData.string -ne '') {
+                        $pendingRebootData.string = $pendingRebootData.string + ', '
                     }
-                    $pendingRebootData.string = $pendingRebootData.string + "File Renames"
+                    $pendingRebootData.string = $pendingRebootData.string + 'File Renames'
                 }
 
                 Return $pendingRebootData
@@ -1117,7 +1135,7 @@ Function Get-PendingRebootModuleVersion {
 Function Install-PendingRebootModule {
     Try {
         If (!(Test-Elevation)) {
-            Invoke-MessageBox -Message "Please run ConfigMgr LogFile Opener as an Administrator to install or update the PendingReboot PowerShell Module."
+            Invoke-MessageBox -Message 'Please run ConfigMgr LogFile Opener as an Administrator to install or update the PendingReboot PowerShell Module.'
             Return
         }
 
@@ -1149,7 +1167,7 @@ Function Install-PendingRebootModule {
 Function Uninstall-PendingRebootModule {
     Try {
         If (!(Test-Elevation)) {
-            Invoke-MessageBox -Message "Please run ConfigMgr LogFile Opener as an Administrator to uninstall the PendingReboot PowerShell Module."
+            Invoke-MessageBox -Message 'Please run ConfigMgr LogFile Opener as an Administrator to uninstall the PendingReboot PowerShell Module.'
             Return
         }
 
@@ -1158,10 +1176,10 @@ Function Uninstall-PendingRebootModule {
 
         # Check if the module is available
         If (!(Test-PendingRebootModuleInstalled)) {
-            Invoke-MessageBox -Icon Information -Message "The PendingReboot PowerShell Module has been successfully uninstalled."
+            Invoke-MessageBox -Icon Information -Message 'The PendingReboot PowerShell Module has been successfully uninstalled.'
         }
         Else {
-            Invoke-MessageBox -Message "The PendingReboot PowerShell Module could still be located after the uninstall attempt. Please try again or uninstall it manually."
+            Invoke-MessageBox -Message 'The PendingReboot PowerShell Module could still be located after the uninstall attempt. Please try again or uninstall it manually.'
         }
     }
     Catch {
@@ -1176,10 +1194,10 @@ Function Test-ProvisioningMode {
 
     Try {
         If ($hostnameIsRemote) {
-            $provisioningMode = Invoke-CimMethod -ComputerName $hostname -Namespace "root\default" -ClassName StdRegProv -MethodName GetStringValue -Arguments @{hDefKey = $ccmExecKey; sSubKeyName = $ccmExecSubKeyName; sValueName = $ccmExecValueName} -ErrorAction SilentlyContinue
+            $provisioningMode = Invoke-CimMethod -ComputerName $hostname -Namespace 'root\default' -ClassName StdRegProv -MethodName GetStringValue -Arguments @{hDefKey = $ccmExecKey; sSubKeyName = $ccmExecSubKeyName; sValueName = $ccmExecValueName } -ErrorAction SilentlyContinue
         }
         Else {
-            $provisioningMode = Invoke-CimMethod -Namespace "root\default" -ClassName StdRegProv -MethodName GetStringValue -Arguments @{hDefKey = $ccmExecKey; sSubKeyName = $ccmExecSubKeyName; sValueName = $ccmExecValueName} -ErrorAction SilentlyContinue
+            $provisioningMode = Invoke-CimMethod -Namespace 'root\default' -ClassName StdRegProv -MethodName GetStringValue -Arguments @{hDefKey = $ccmExecKey; sSubKeyName = $ccmExecSubKeyName; sValueName = $ccmExecValueName } -ErrorAction SilentlyContinue
         }
 
         Return [System.Convert]::ToBoolean($provisioningMode.sValue)
@@ -1192,13 +1210,13 @@ Function Test-ProvisioningMode {
 Function Exit-ProvisioningMode {
     Try {
         If ($hostnameIsRemote) {
-            Invoke-WmiMethod -ComputerName $hostname -Namespace "root\ccm" -Class "SMS_Client" -Name "SetClientProvisioningMode" -ArgumentList $false | Out-Null
+            Invoke-WmiMethod -ComputerName $hostname -Namespace 'root\ccm' -Class 'SMS_Client' -Name 'SetClientProvisioningMode' -ArgumentList $false | Out-Null
         }
         Else {
-            Invoke-WmiMethod -Class "SMS_Client" -Method "SetClientProvisioningMode" -Arguments $false | Out-Null
+            Invoke-WmiMethod -Class 'SMS_Client' -Method 'SetClientProvisioningMode' -Arguments $false | Out-Null
         }
 
-        Invoke-MessageBox -Icon Information -Message "The Device has been successfully taken out of Provisioning Mode."
+        Invoke-MessageBox -Icon Information -Message 'The Device has been successfully taken out of Provisioning Mode.'
     }
     Catch {
         Invoke-MessageBox -Message "Unable to exit Provisioning Mode.`n`n$errorMessage"
@@ -1209,8 +1227,8 @@ Function Enable-RemoteRegistry {
     Try {
         If ($hostnameIsRemote) {
             $remoteRegistryService = Get-Service -Name RemoteRegistry -ComputerName $hostname
-            If ($remoteRegistryService.Status -eq "Running") {
-                Invoke-MessageBox -Icon Exclamation -Message "The Remote Registry Service is already running."
+            If ($remoteRegistryService.Status -eq 'Running') {
+                Invoke-MessageBox -Icon Exclamation -Message 'The Remote Registry Service is already running.'
                 Return
             }
             Else {
@@ -1220,8 +1238,8 @@ Function Enable-RemoteRegistry {
         }
         Else {
             $remoteRegistryService = Get-Service -Name RemoteRegistry
-            If ($remoteRegistryService.Status -eq "Running") {
-                Invoke-MessageBox -Icon Exclamation -Message "The Remote Registry Service is already running."
+            If ($remoteRegistryService.Status -eq 'Running') {
+                Invoke-MessageBox -Icon Exclamation -Message 'The Remote Registry Service is already running.'
                 Return
             }
             Else {
@@ -1230,7 +1248,7 @@ Function Enable-RemoteRegistry {
             }
         }
 
-        Invoke-MessageBox -Icon Information -Message "The Remote Registry Service has been successfully started."
+        Invoke-MessageBox -Icon Information -Message 'The Remote Registry Service has been successfully started.'
     }
     Catch {
         Invoke-MessageBox -Message "Unable to start the Remote Registry Service.`n`n$errorMessage"
@@ -1241,8 +1259,8 @@ Function Disable-RemoteRegistry {
     Try {
         If ($hostnameIsRemote) {
             $remoteRegistryService = Get-Service -Name RemoteRegistry -ComputerName $hostname
-            If ($remoteRegistryService.Status -eq "Stopped") {
-                Invoke-MessageBox -Icon Exclamation -Message "The Remote Registry Service is already stopped."
+            If ($remoteRegistryService.Status -eq 'Stopped') {
+                Invoke-MessageBox -Icon Exclamation -Message 'The Remote Registry Service is already stopped.'
                 Return
             }
             Else {
@@ -1252,8 +1270,8 @@ Function Disable-RemoteRegistry {
         }
         Else {
             $remoteRegistryService = Get-Service -Name RemoteRegistry
-            If ($remoteRegistryService.Status -eq "Stopped") {
-                Invoke-MessageBox -Icon Exclamation -Message "The Remote Registry Service is already stopped."
+            If ($remoteRegistryService.Status -eq 'Stopped') {
+                Invoke-MessageBox -Icon Exclamation -Message 'The Remote Registry Service is already stopped.'
                 Return
             }
             Else {
@@ -1262,7 +1280,7 @@ Function Disable-RemoteRegistry {
             }
         }
 
-        Invoke-MessageBox -Icon Information -Message "The Remote Registry Service has been successfully stopped."
+        Invoke-MessageBox -Icon Information -Message 'The Remote Registry Service has been successfully stopped.'
     }
     Catch {
         Invoke-MessageBox -Message "Unable to stop the Remote Registry Service.`n`n$errorMessage"
@@ -1271,7 +1289,7 @@ Function Disable-RemoteRegistry {
 
 Function Connect-Regedit {
     # Start regedit and wait until it is open
-    Start-Process -FilePath "C:\Windows\system32\regedt32.exe"
+    Start-Process -FilePath 'C:\Windows\system32\regedt32.exe'
     Start-Sleep -Milliseconds $actionDelayShort
 
     # Send ALT to select the menu bar
@@ -1308,13 +1326,13 @@ Function Write-MenuHeader {
 
 Function Write-MenuDeviceData {
     $InitialColor = $host.ui.RawUI.ForegroundColor
-    $host.ui.RawUI.ForegroundColor = "Cyan"
+    $host.ui.RawUI.ForegroundColor = 'Cyan'
     Write-Output " Connected Device : $hostname ($domain)"
     $host.ui.RawUI.ForegroundColor = $InitialColor
     Write-Output " Client Hardware  : $modelString"
     Write-Output " Operating System : $osString"
     If ($provisioningMode) {
-        $host.ui.RawUI.ForegroundColor = "Red"
+        $host.ui.RawUI.ForegroundColor = 'Red'
         Write-Output " ConfigMgr Client : $clientVersionString (Provisioning Mode)"
         $host.ui.RawUI.ForegroundColor = $InitialColor
     }
@@ -1324,11 +1342,11 @@ Function Write-MenuDeviceData {
     Write-Output " Boot Time        : $lastBootTime"
     Write-Output " IP Address       : $ipAddressString"
     If ($pendingRebootState) {
-        If ($pendingRebootString -like "*ConfigMgr*") {
-            $host.ui.RawUI.ForegroundColor = "Red"
+        If ($pendingRebootString -like '*ConfigMgr*') {
+            $host.ui.RawUI.ForegroundColor = 'Red'
         }
         Else {
-            $host.ui.RawUI.ForegroundColor = "Yellow"
+            $host.ui.RawUI.ForegroundColor = 'Yellow'
         }
         Write-Output " Pending Restart  : $pendingRebootString"
         $host.ui.RawUI.ForegroundColor = $InitialColor
@@ -1394,7 +1412,7 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch) {
         $clientVersionString = Get-ClientVersionString
 
         # Get Provisioning Mode Status
-        If ($clientVersionString -ne "n/a") {
+        If ($clientVersionString -ne 'n/a') {
             $provisioningMode = Test-ProvisioningMode
         }
 
@@ -1450,43 +1468,107 @@ Function Invoke-MainMenu ([switch] $ResetHostname, [switch] $FirstLaunch) {
     Write-Output ' --- Options -----------------------------------------------'
     Write-Output ' [93] Show recent logs     [94] Refresh Device data'
     Write-Output " [96] Client Actions       [97] Start $logProgram"
-    Write-Output " [98] Change Device        [99] Exit"
+    Write-Output ' [98] Change Device        [99] Exit'
     Write-Output ' [X]  Settings             [?]  About'
     Write-Output ''
 
     Switch (Read-Host -Prompt ' Please select an Action') {
-        1 {Open-LogFile -Action 'ccmsetup'}
-        2 {Open-LogFile -Action 'ccmupdate'}
-        3 {Open-LogFile -Action 'ccmappdiscovery'}
-        4 {Open-LogFile -Action 'ccmappenforce'}
-        5 {Open-LogFile -Action 'ccmexecmgr'}
-        6 {Open-LogFile -Action 'ccmexec'}
-        7 {Open-LogFile -Action 'ccmstartup'}
-        8 {Open-LogFile -Action 'ccmpolicy'}
-        9 {Open-LogFile -Action 'ccmepagent'}
-        10 {Open-LogFile -Action 'ccmdownload'}
-        11 {Open-LogFile -Action 'ccmsetupeval'}
-        12 {Open-LogFile -Action 'ccminventory'}
-        13 {Open-LogFile -Action 'ccmsmsts'}
-        14 {Open-LogFile -Action 'ccmstatemessage'}
-        15 {Open-LogFile -Action 'ccmscript'}
-        16 {Open-LogFile -Action 'winupdate'}
-        17 {Open-LogFile -Action 'winservicingsetupact'}
-        18 {Open-LogFile -Action 'winservicingsetuperr'}
-        19 {Open-LogFile -Action 'scepmpcmdrun'}
-        50 {Open-Path -Path 'C$\Windows\CCM\Logs'}
-        51 {Open-Path -Path 'C$\Windows\ccmcache'}
-        52 {Open-Path -Path 'C$\Windows\ccmsetup'}
-        53 {Open-Path -Path 'C$\Windows\Logs\Software'}
-        54 {Open-Path -Path 'C$\Windows\Temp'}
-        93 {Invoke-RecentLogMenu}
-        94 {Invoke-MainMenu -FirstLaunch}
-        96 {Invoke-ClientActionMenu}
-        97 {Invoke-LogProgram}
-        98 {Invoke-MainMenu -ResetHostname}
-        99 {Clear-Host; Exit}
-        'X' {Invoke-SettingsMenu}
-        '?' {Invoke-AboutMenu}
+        1 {
+            Open-LogFile -Action 'ccmsetup'
+        }
+        2 {
+            Open-LogFile -Action 'ccmupdate'
+        }
+        3 {
+            Open-LogFile -Action 'ccmappdiscovery'
+        }
+        4 {
+            Open-LogFile -Action 'ccmappenforce'
+        }
+        5 {
+            Open-LogFile -Action 'ccmexecmgr'
+        }
+        6 {
+            Open-LogFile -Action 'ccmexec'
+        }
+        7 {
+            Open-LogFile -Action 'ccmstartup'
+        }
+        8 {
+            Open-LogFile -Action 'ccmpolicy'
+        }
+        9 {
+            Open-LogFile -Action 'ccmepagent'
+        }
+        10 {
+            Open-LogFile -Action 'ccmdownload'
+        }
+        11 {
+            Open-LogFile -Action 'ccmsetupeval'
+        }
+        12 {
+            Open-LogFile -Action 'ccminventory'
+        }
+        13 {
+            Open-LogFile -Action 'ccmsmsts'
+        }
+        14 {
+            Open-LogFile -Action 'ccmstatemessage'
+        }
+        15 {
+            Open-LogFile -Action 'ccmscript'
+        }
+        16 {
+            Open-LogFile -Action 'winupdate'
+        }
+        17 {
+            Open-LogFile -Action 'winservicingsetupact'
+        }
+        18 {
+            Open-LogFile -Action 'winservicingsetuperr'
+        }
+        19 {
+            Open-LogFile -Action 'scepmpcmdrun'
+        }
+        50 {
+            Open-Path -Path 'C$\Windows\CCM\Logs'
+        }
+        51 {
+            Open-Path -Path 'C$\Windows\ccmcache'
+        }
+        52 {
+            Open-Path -Path 'C$\Windows\ccmsetup'
+        }
+        53 {
+            Open-Path -Path 'C$\Windows\Logs\Software'
+        }
+        54 {
+            Open-Path -Path 'C$\Windows\Temp'
+        }
+        93 {
+            Invoke-RecentLogMenu
+        }
+        94 {
+            Invoke-MainMenu -FirstLaunch
+        }
+        96 {
+            Invoke-ClientActionMenu
+        }
+        97 {
+            Invoke-LogProgram
+        }
+        98 {
+            Invoke-MainMenu -ResetHostname
+        }
+        99 {
+            Clear-Host; Exit
+        }
+        'X' {
+            Invoke-SettingsMenu
+        }
+        '?' {
+            Invoke-AboutMenu
+        }
     }
 
     Invoke-MainMenu
@@ -1531,37 +1613,91 @@ Function Invoke-ClientActionMenu {
     Write-Output ' [52] Connect via Regedit'
     Write-Output ''
     Write-Output ' --- Options -----------------------------------------------'
-    Write-Output " [98] Back to Main Menu    [99] Exit"
+    Write-Output ' [98] Back to Main Menu    [99] Exit'
     Write-Output ''
 
     Switch (Read-Host -Prompt ' Please select an Action') {
-        1 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000121' -LogFile 'ccmappdiscovery'}
-        2 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000003'}
-        3 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000010'}
-        4 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000001' -LogFile 'ccminventory'}
-        5 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000021','00000000-0000-0000-0000-000000000022' -LogFile 'ccmpolicy'}
-        6 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000002'}
-        7 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000031'}
-        8 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000108' -LogFile 'ccmupdate'}
-        9 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000113'-LogFile 'ccmupdate'}
-        10 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000032' }
-        11 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000111' -LogFile 'ccmstatemessage'}
-        20 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000221' -LogFile 'ccmepagent'}
-        21 {Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000222' -LogFile 'ccmepagent'}
-        22 {Invoke-ConfigurationBaselineEvaluation}
-        23 {Update-SoftwareUpdateComplianceState}
-        24 {Invoke-CcmPolicyReset}
-        25 {Exit-ProvisioningMode}
-        40 {Start-CcmExec}
-        41 {Stop-CcmExec}
-        42 {Restart-CcmExec}
-        43 {Invoke-CcmEval}
-        44 {Invoke-CcmRepair}
-        50 {Enable-RemoteRegistry}
-        51 {Disable-RemoteRegistry}
-        52 {Connect-Regedit}
-        98 {Invoke-MainMenu}
-        99 {Clear-Host; Exit}
+        1 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000121' -LogFile 'ccmappdiscovery'
+        }
+        2 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000003'
+        }
+        3 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000010'
+        }
+        4 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000001' -LogFile 'ccminventory'
+        }
+        5 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000022' -LogFile 'ccmpolicy'
+        }
+        6 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000002'
+        }
+        7 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000031'
+        }
+        8 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000108' -LogFile 'ccmupdate'
+        }
+        9 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000113'-LogFile 'ccmupdate'
+        }
+        10 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000032'
+        }
+        11 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000111' -LogFile 'ccmstatemessage'
+        }
+        20 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000221' -LogFile 'ccmepagent'
+        }
+        21 {
+            Invoke-ClientAction -Action '00000000-0000-0000-0000-000000000222' -LogFile 'ccmepagent'
+        }
+        22 {
+            Invoke-ConfigurationBaselineEvaluation
+        }
+        23 {
+            Update-SoftwareUpdateComplianceState
+        }
+        24 {
+            Invoke-CcmPolicyReset
+        }
+        25 {
+            Exit-ProvisioningMode
+        }
+        40 {
+            Start-CcmExec
+        }
+        41 {
+            Stop-CcmExec
+        }
+        42 {
+            Restart-CcmExec
+        }
+        43 {
+            Invoke-CcmEval
+        }
+        44 {
+            Invoke-CcmRepair
+        }
+        50 {
+            Enable-RemoteRegistry
+        }
+        51 {
+            Disable-RemoteRegistry
+        }
+        52 {
+            Connect-Regedit
+        }
+        98 {
+            Invoke-MainMenu
+        }
+        99 {
+            Clear-Host; Exit
+        }
     }
 
     Invoke-ClientActionMenu
@@ -1585,22 +1721,28 @@ Function Invoke-RecentLogMenu {
 
     Write-Output ''
     Write-Output ' --- Options -----------------------------------------------'
-    Write-Output " [97] Refresh Recent Logs  [98] Back to Main Menu"
-    Write-Output " [99] Exit"
+    Write-Output ' [97] Refresh Recent Logs  [98] Back to Main Menu'
+    Write-Output ' [99] Exit'
     Write-Output ''
 
     $recentLogInput = Read-Host -Prompt ' Please select an Action'
     Switch ($recentLogInput) {
-        97 {Invoke-RecentLogMenu}
-        98 {Invoke-MainMenu}
-        99 {Clear-Host; Exit}
+        97 {
+            Invoke-RecentLogMenu
+        }
+        98 {
+            Invoke-MainMenu
+        }
+        99 {
+            Clear-Host; Exit
+        }
         Default {
             # Convert input to integer
             Try {
                 $recentLogInputInt32 = [convert]::ToInt32($recentLogInput, 10)
 
                 # Get log handler for user input
-                $logHandler = $recentLogTable.GetEnumerator() | Where-Object {$_.Name -eq $recentLogInputInt32}
+                $logHandler = $recentLogTable.GetEnumerator() | Where-Object { $_.Name -eq $recentLogInputInt32 }
             }
             Catch {
                 Invoke-RecentLogMenu
@@ -1616,7 +1758,7 @@ Function Invoke-RecentLogMenu {
     Invoke-RecentLogMenu
 }
 
-Function Invoke-SettingsMenu  {
+Function Invoke-SettingsMenu {
     Write-MenuHeader
     Write-Output ' --- Console Extension  ------------------------------------'
     Write-Output ' [1] Install / Update Console Extension'
@@ -1624,107 +1766,133 @@ Function Invoke-SettingsMenu  {
     Write-Output ''
     Write-Output ' --- Log Program -------------------------------------------'
 
-    If ($logProgram -eq "CMTrace") {
-        Write-Output " [10] CMTrace (active)"
+    If ($logProgram -eq 'CMTrace') {
+        Write-Output ' [10] CMTrace (active)'
     }
     Else {
-        Write-Output " [10] CMTrace"
+        Write-Output ' [10] CMTrace'
     }
 
-    If ($logProgram -eq "CMLogViewer") {
-        Write-Output " [11] CMLogViewer (active)"
+    If ($logProgram -eq 'CMLogViewer') {
+        Write-Output ' [11] CMLogViewer (active)'
     }
     Else {
-        Write-Output " [11] CMLogViewer"
+        Write-Output ' [11] CMLogViewer'
     }
 
-    If ($logProgram -eq "OneTrace") {
-        Write-Output " [12] OneTrace (active)"
+    If ($logProgram -eq 'OneTrace') {
+        Write-Output ' [12] OneTrace (active)'
     }
     Else {
-        Write-Output " [12] OneTrace"
+        Write-Output ' [12] OneTrace'
     }
     Write-Output ''
     Write-Output ' --- Log Program / File Explorer WindowStyle ---------------'
-    If ($logProgramWindowStyle -eq "Normal") {
-        Write-Output " [20] Normal (active)"
+    If ($logProgramWindowStyle -eq 'Normal') {
+        Write-Output ' [20] Normal (active)'
     }
     Else {
-        Write-Output " [20] Normal"
+        Write-Output ' [20] Normal'
     }
 
-    If ($logProgramWindowStyle -eq "Minimized") {
-        Write-Output " [21] Minimized (active)"
+    If ($logProgramWindowStyle -eq 'Minimized') {
+        Write-Output ' [21] Minimized (active)'
     }
     Else {
-        Write-Output " [21] Minimied"
+        Write-Output ' [21] Minimied'
     }
 
-    If ($logProgramWindowStyle -eq "Maximized") {
-        Write-Output " [22] Maximized (active)"
+    If ($logProgramWindowStyle -eq 'Maximized') {
+        Write-Output ' [22] Maximized (active)'
     }
     Else {
-        Write-Output " [22] Maximized"
+        Write-Output ' [22] Maximized'
     }
     Write-Output ''
     If (Test-PendingRebootModuleInstalled) {
         $pendingRebootModuleVersion = Get-PendingRebootModuleVersion
         Write-Output " --- PendingReboot PowerShell Module (v$pendingRebootModuleVersion installed) --"
-        Write-Output " [30] Update Module from PowerShell Gallery"
-        Write-Output " [31] Uninstall Module"
+        Write-Output ' [30] Update Module from PowerShell Gallery'
+        Write-Output ' [31] Uninstall Module'
     }
     Else {
-        Write-Output " --- PendingReboot PowerShell Module -----------------------"
-        Write-Output " [30] Install Module from PowerShell Gallery"
+        Write-Output ' --- PendingReboot PowerShell Module -----------------------'
+        Write-Output ' [30] Install Module from PowerShell Gallery'
     }
     Write-Output ''
-    Write-Output " --- General options ---------------------------------------"
+    Write-Output ' --- General options ---------------------------------------'
     If ($enableAutoLogLaunch -eq $false) {
-        Write-Output " [40] Enable Auto Log Launch"
+        Write-Output ' [40] Enable Auto Log Launch'
     }
     Else {
-        Write-Output " [40] Disable Auto Log Launch"
+        Write-Output ' [40] Disable Auto Log Launch'
     }
 
-    If ($logProgram -eq "CMLogViewer" -and $disableHistoryLogFiles -eq $true) {
-        Write-Output " [41] Enable History LogFiles"
+    If ($logProgram -eq 'CMLogViewer' -and $disableHistoryLogFiles -eq $true) {
+        Write-Output ' [41] Enable History LogFiles'
     }
-    ElseIf (($logProgram -eq "CMLogViewer" -and $disableHistoryLogFiles -eq $false)) {
-        Write-Output " [41] Disable History LogFiles"
+    ElseIf (($logProgram -eq 'CMLogViewer' -and $disableHistoryLogFiles -eq $false)) {
+        Write-Output ' [41] Disable History LogFiles'
     }
 
     Write-Output ''
     Write-Output ' --- Options -----------------------------------------------'
-    Write-Output " [98] Back to Main Menu    [99] Exit"
+    Write-Output ' [98] Back to Main Menu    [99] Exit'
     Write-Output ''
 
     Switch (Read-Host -Prompt ' Please select an Action') {
-        1 {Install-ConsoleExtension}
-        2 {Remove-ConsoleExtension}
-        10 {$logProgram = 'CMTrace'}
-        11 {$logProgram = 'CMLogViewer'}
-        12 {$logProgram = 'OneTrace'}
-        20 {$logProgramWindowStyle = 'Normal'}
-        21 {$logProgramWindowStyle = 'Minimized'}
-        22 {$logProgramWindowStyle = 'Maximized'}
-        30 {Install-PendingRebootModule}
-        31 {Uninstall-PendingRebootModule}
+        1 {
+            Install-ConsoleExtension
+        }
+        2 {
+            Remove-ConsoleExtension
+        }
+        10 {
+            $logProgram = 'CMTrace'
+        }
+        11 {
+            $logProgram = 'CMLogViewer'
+        }
+        12 {
+            $logProgram = 'OneTrace'
+        }
+        20 {
+            $logProgramWindowStyle = 'Normal'
+        }
+        21 {
+            $logProgramWindowStyle = 'Minimized'
+        }
+        22 {
+            $logProgramWindowStyle = 'Maximized'
+        }
+        30 {
+            Install-PendingRebootModule
+        }
+        31 {
+            Uninstall-PendingRebootModule
+        }
         40 {
             If ($enableAutoLogLaunch -eq $false) {
                 $enableAutoLogLaunch = $true
-            } Else {
+            }
+            Else {
                 $enableAutoLogLaunch = $false
             }
         }
         41 {
             If ($logProgram -eq 'CMLogViewer' -and $disableHistoryLogFiles -eq $true) {
                 $disableHistoryLogFiles = $false
-            } Else {
+            }
+            Else {
                 $disableHistoryLogFiles = $true
             }
         }
-        98 {Invoke-MainMenu -RefreshDeviceData}
-        99 {Clear-Host; Exit}
+        98 {
+            Invoke-MainMenu -RefreshDeviceData
+        }
+        99 {
+            Clear-Host; Exit
+        }
     }
 
     Invoke-SettingsMenu
@@ -1739,19 +1907,23 @@ Function Invoke-AboutMenu {
     Write-Output ''
     Write-Output ''
     Write-Output ' --- Options -----------------------------------------------'
-    Write-Output " [98] Back to Main Menu    [99] Exit"
+    Write-Output ' [98] Back to Main Menu    [99] Exit'
     Write-Output ''
 
     Switch (Read-Host -Prompt ' Please select an Action') {
-        98 {Invoke-MainMenu}
-        99 {Clear-Host; Exit}
+        98 {
+            Invoke-MainMenu
+        }
+        99 {
+            Clear-Host; Exit
+        }
     }
 
     Invoke-AboutMenu
 }
 
 # Check OS Version
-If ([Version] (Get-CimInstance -ClassName Win32_OperatingSystem -Property Version).Version -lt "6.3") {
+If ([Version] (Get-CimInstance -ClassName Win32_OperatingSystem -Property Version).Version -lt '6.3') {
     Invoke-MessageBox -Message 'ConfigMgr LogFile Opener requires Windows 8.1 / Windows Server 2012 R2 or newer! Exiting...'
     Exit
 }
