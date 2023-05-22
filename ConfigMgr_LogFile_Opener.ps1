@@ -84,7 +84,7 @@ Param(
 )
 
 # General options
-$toolVersion = '3.0.5'
+$toolVersion = '3.0.6'
 $updateUrl = 'https://msitproblog.com/clfo_options.xml'
 
 # Add Visual Basic Assembly for displaying message popups
